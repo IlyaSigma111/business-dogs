@@ -78,7 +78,7 @@ if(!dem||dem.count<=0)return{err:'Нет спроса на эту породу'}
 const price=dog.age===AGE_P?Math.round(dem.price*.5):dem.price;
 delete p.dogs[dogId];
 const newDem=room.demand.map(d=>d.breed===dog.breed?{...d,count:d.count-1}:d);
-await this.roomRef.update({'players/'+this.myId+'/dogs':p.dogs,'players/'+this.myId+'/balance':p.balance+price,demand:newDem});
+await this.roomRef.update({['players/'+this.myId+'/dogs']:p.dogs,['players/'+this.myId+'/balance']:p.balance+price,demand:newDem});
 return{ok:true,price};
 }
 
