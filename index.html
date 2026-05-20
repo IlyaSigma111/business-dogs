@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Business Dogs</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+<!-- LOBBY -->
+<div id="scr-lobby" class="screen active">
+<div class="lobby-bg">
+<div class="lobby-box">
+<div class="lobby-logo">🐕</div>
+<h1>Business Dogs</h1>
+<p class="lobby-sub">Мультиплеер бизнес-симулятор</p>
+<div class="lobby-fields">
+<input id="inp-name" class="f-inp" placeholder="Имя игрока" maxlength="16" autocomplete="off">
+<div class="role-pick">
+<button class="r-btn" data-r="nursery">🐕 Питомник</button>
+<button class="r-btn" data-r="shop">🏪 Зоомагазин</button>
+</div>
+<div class="lobby-btns">
+<button id="btn-create" class="l-btn primary">🏠 Создать комнату</button>
+<div class="or-line"><span>или</span></div>
+<div class="join-line">
+<input id="inp-code" class="f-inp code-inp" placeholder="Код" maxlength="6" autocomplete="off">
+<button id="btn-join" class="l-btn secondary">🚀 Войти</button>
+</div>
+</div>
+</div>
+<div class="lobby-footer">До 10 игроков · 4 породы · Сезоны · Разведение</div>
+</div>
+</div>
+</div>
+
+<!-- WAITING ROOM -->
+<div id="scr-wait" class="screen">
+<div class="wait-bg">
+<div class="wait-box">
+<h2>⏳ Комната ожидания</h2>
+<div class="wait-code-row">
+<span>Код комнаты:</span>
+<span id="d-code" class="code-val">------</span>
+<button id="btn-copy" class="sm-btn">📋</button>
+</div>
+<div id="wait-players" class="wp-grid"></div>
+<div class="wait-controls">
+<label class="chk"><input type="checkbox" id="chk-ready"><span class="chk-label">Готов</span></label>
+<label class="chk host-chk"><input type="checkbox" id="chk-host-play" checked><span class="chk-label">Хост играет</span></label>
+<div class="ready-info">Готово: <b id="r-cnt">0</b> / <b id="r-tot">0</b></div>
+<button id="btn-start" class="l-btn go" disabled>🏆 Начать игру</button>
+<button id="btn-leave" class="l-btn cancel">Выйти</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- GAME -->
+<div id="scr-game" class="screen">
+
+<!-- TOP BAR -->
+<header id="topbar">
+<div class="tb-left">
+<div class="player-avatar" id="tb-avatar">🐕</div>
+<div class="player-info">
+<span class="p-name" id="tb-name">Игрок</span>
+<span class="p-role" id="tb-role">Питомник</span>
+</div>
+</div>
+<div class="tb-center">
+<div class="coin-display">
+<span class="coin-icon">🪙</span>
+<span class="coin-val" id="tb-balance">0</span>
+</div>
+</div>
+<div class="tb-right">
+<div class="season-info">
+<span class="season-lbl">Сезон</span>
+<span class="season-num" id="tb-season">1</span>
+<span class="season-max" id="tb-max">/12</span>
+</div>
+<div class="timer" id="tb-timer">5:00</div>
+<button id="btn-end-season" class="tb-btn end">Конец сезона</button>
+<button id="btn-players-modal" class="tb-btn">👥</button>
+</div>
+</header>
+
+<!-- MAIN GAME AREA -->
+<div id="game-area">
+
+<!-- LEFT PANEL: My Dogs / Houses -->
+<div id="panel-left" class="game-panel">
+<div class="panel-header">🐕 Мои собаки</div>
+<div id="my-dogs-panel"></div>
+<div id="houses-panel"></div>
+<div class="panel-actions" id="panel-actions"></div>
+</div>
+
+<!-- CENTER: Dog Yard / City Market -->
+<div id="panel-center" class="game-panel">
+<div id="main-view"></div>
+</div>
+
+<!-- RIGHT PANEL: Requests / Trade -->
+<div id="panel-right" class="game-panel">
+<div class="panel-header">📨 Запросы</div>
+<div id="requests-feed"></div>
+<div class="panel-header" style="margin-top:12px">🤝 Сделки</div>
+<div id="deals-panel"></div>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+<button class="bnav active" data-tab="main">🏠 Главная</button>
+<button class="bnav" data-tab="mydogs">🐕 Собаки</button>
+<button class="bnav" data-tab="city">🏚 Город</button>
+<button class="bnav" data-tab="trade">🤝 Сделки</button>
+<button class="bnav" data-tab="breed">💘 Разведение</button>
+<button class="bnav" data-tab="bank">🏦 Банк</button>
+</nav>
+
+</div>
+
+<!-- GAME OVER -->
+<div id="scr-over" class="screen">
+<div class="over-wrap">
+<h1>🏆 Игра окончена!</h1>
+<div id="leaderboard"></div>
+<button id="btn-restart" class="l-btn primary">🔄 Заново</button>
+</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="overlay hidden">
+<div class="modal">
+<div class="modal-head"><h3 id="m-title"></h3><button id="m-x">&times;</button></div>
+<div id="m-body" class="modal-body"></div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="js/cfg.js"></script>
+<script src="js/data.js"></script>
+<script src="js/net.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
