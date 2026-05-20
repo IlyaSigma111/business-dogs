@@ -28,8 +28,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
 .or-line{text-align:center;color:#999;font-size:.8rem;margin:4px 0;position:relative}
 .or-line::before,.or-line::after{content:'';position:absolute;top:50%;width:35%;height:1px;background:#ddd}
 .or-line::before{left:0}.or-line::after{right:0}
-.join-line{display:flex;gap:8px}
-.code-inp{flex:1}
+.join-line{display:flex;flex-direction:column;gap:8px}
+.code-inp{width:100%;text-align:center;font-size:1.4rem;letter-spacing:6px;font-family:monospace;padding:14px 16px}
 .lobby-footer{margin-top:16px;color:#999;font-size:.75rem}
 
 /* === WAITING === */
