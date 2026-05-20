@@ -18,10 +18,7 @@
 <p class="lobby-sub">Мультиплеер бизнес-симулятор</p>
 <div class="lobby-fields">
 <input id="inp-name" class="f-inp" placeholder="Имя игрока" maxlength="16" autocomplete="off">
-<div class="role-pick">
-<button class="r-btn" data-r="nursery">🐕 Питомник</button>
-<button class="r-btn" data-r="shop">🏪 Зоомагазин</button>
-</div>
+<div class="role-info" id="role-info">Роль будет назначена случайно при входе</div>
 <div class="lobby-btns">
 <button id="btn-create" class="l-btn primary">🏠 Создать комнату</button>
 <div class="or-line"><span>или</span></div>
@@ -46,8 +43,12 @@
 <span id="d-code" class="code-val">------</span>
 <button id="btn-copy" class="sm-btn">📋</button>
 </div>
-<div id="wait-players" class="wp-grid"></div>
-<div class="wait-controls">
+    <div id="wait-players" class="wp-grid"></div>
+    <div class="host-controls hidden" id="host-controls">
+      <div class="hc-title">⚙️ Хост: сменить роли</div>
+      <div id="hc-list"></div>
+    </div>
+    <div class="wait-controls">
 <label class="chk"><input type="checkbox" id="chk-ready"><span class="chk-label">Готов</span></label>
 <label class="chk host-chk"><input type="checkbox" id="chk-host-play" checked><span class="chk-label">Хост играет</span></label>
 <div class="ready-info">Готово: <b id="r-cnt">0</b> / <b id="r-tot">0</b></div>

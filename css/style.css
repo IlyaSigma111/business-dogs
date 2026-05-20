@@ -150,6 +150,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
 /* === MODAL === */
 .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
 .overlay.hidden{display:none}
+.hidden{display:none!important}
+.role-info{background:#FFF3E0;border:2px solid #FFB74D;border-radius:10px;padding:10px;color:#E65100;font-size:.9rem;font-weight:600}
+.host-controls{background:#FFF8E1;border:2px solid #FFD54F;border-radius:10px;padding:10px;margin:8px 0;text-align:left}
+.hc-title{font-weight:700;color:#E65100;font-size:.85rem;margin-bottom:8px;text-align:center}
+.hc-row{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:.85rem}
+.hc-name{flex:1;font-weight:600}
+.hc-rbtn{padding:4px 8px;border:2px solid #ddd;border-radius:6px;background:#fff;font-size:.75rem;cursor:pointer;transition:all .15s}
+.hc-rbtn.active{border-color:#4CAF50;background:#E8F5E9;color:#2d5016}
 .modal{background:#fff;border-radius:16px;width:100%;max-width:440px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee}
 .modal-head h3{font-size:1rem;color:#2d5016}
