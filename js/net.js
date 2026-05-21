@@ -67,16 +67,13 @@ return{ok:true,code:code};
 
 _pickRole(room){
 var players=room.players||{};
-var roles={n:0,s:0,b:0};
+var roles={n:0,s:0};
 Object.keys(players).forEach(function(k){
 var r=players[k].role;
 if(r===ROLE_N)roles.n++;
 else if(r===ROLE_S)roles.s++;
-else if(r===ROLE_B)roles.b++;
 });
-if(roles.n<=roles.s&&roles.n<=roles.b)return ROLE_N;
-if(roles.s<=roles.b)return ROLE_S;
-return ROLE_B;
+return roles.n<=roles.s?ROLE_N:ROLE_S;
 }
 
 _startListen(code){
@@ -234,7 +231,6 @@ async takeLoan(amount){
 if(!this.roomRef||!this.myId)return;
 var snap=await this.roomRef.get();if(!snap.exists())return;
 var p=snap.val().players?snap.val().players[this.myId]:null;if(!p)return;
-if(p.role!==ROLE_B)return{err:'Только банкир'};
 if((p.loan||0)+amount>1000)return{err:'Лимит 1000'};
 await this.roomRef.child('players/'+this.myId).update({loan:(p.loan||0)+amount,balance:(p.balance||0)+amount});
 return{ok:true};

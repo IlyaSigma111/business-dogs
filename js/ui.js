@@ -123,7 +123,7 @@ UI.prototype.cycleRole=function(pid){
 var players=this.state.players;
 if(!players||!players[pid])return;
 var cur=players[pid].role;
-var next=cur===ROLE_N?ROLE_S:cur===ROLE_S?ROLE_B:ROLE_N;
+var next=cur===ROLE_N?ROLE_S:ROLE_N;
 this.net.changeRole(pid,next);
 };
 
@@ -145,8 +145,8 @@ for(var i=0;i<keys.length;i++){
 var pid=keys[i];
 var p=players[pid];if(!p)continue;
 if(p.ready)readyCount++;
-var emoji=p.role===ROLE_S?'🏪':p.role===ROLE_B?'🏦':'🐱';
-var roleLabel=p.role===ROLE_S?'Магазин':p.role===ROLE_B?'Банкир':'Питомник';
+var emoji=p.role===ROLE_S?'🏪':'🐱';
+var roleLabel=p.role===ROLE_S?'Магазин':'Питомник';
 html+='<div class="p-card">';
 html+='<div class="p-left"><span class="p-emoji">'+emoji+'</span>';
 html+='<div><div class="p-name">'+(p.name||'Кот')+'</div>';
@@ -180,10 +180,10 @@ var balEl=document.getElementById('tb-balance');
 var seaEl=document.getElementById('tb-season');
 var emojiEl=document.getElementById('tb-emoji');
 if(nameEl)nameEl.textContent=me.name||'Кот';
-if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':me.role===ROLE_B?'Банкир':'Питомник';
+if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':'Питомник';
 if(balEl)balEl.textContent=fmtN(me.balance||0);
 if(seaEl)seaEl.textContent=room.season||1;
-if(emojiEl)emojiEl.textContent=me.role===ROLE_S?'🏪':me.role===ROLE_B?'🏦':'🐱';
+if(emojiEl)emojiEl.textContent=me.role===ROLE_S?'🏪':'🐱';
 var content=document.getElementById('game-content');
 if(!content)return;
 if(this.tab==='home')this.renderHome(content,room,me);
@@ -211,14 +211,17 @@ html+='<div class="act-row">';
 html+='<button class="act-btn act-house" onclick="ui.actAddHouse()">🏠 Дом ('+HOUSE_PRICE+'🪙)</button>';
 html+='<button class="act-btn act-breed" onclick="ui.tabBreed()">💘 Разведение</button>';
 html+='</div>';
+html+='<div class="act-row">';
+html+='<button class="act-btn act-buy" onclick="ui.actLoan()">💳 Взять кредит</button>';
+html+='<button class="act-btn act-sell" onclick="ui.actRepay()">💰 Вернуть кредит</button>';
+html+='</div>';
 }else if(me.role===ROLE_S){
 html+='<div class="act-row">';
 html+='<button class="act-btn act-house" onclick="ui.actAddHouse()">🏠 Дом ('+HOUSE_PRICE+'🪙)</button>';
 html+='<button class="act-btn act-buy" onclick="ui.tabTrade()">🤝 Купить у игрока</button>';
 html+='</div>';
-}else if(me.role===ROLE_B){
 html+='<div class="act-row">';
-html+='<button class="act-btn act-buy" onclick="ui.actLoan()">💳 Выдать кредит</button>';
+html+='<button class="act-btn act-buy" onclick="ui.actLoan()">💳 Взять кредит</button>';
 html+='<button class="act-btn act-sell" onclick="ui.actRepay()">💰 Вернуть кредит</button>';
 html+='</div>';
 }
@@ -365,8 +368,8 @@ html+='</div>';
 html+='<div class="card"><h3>ℹ️ Правила</h3>';
 html+='<p style="color:#888;font-size:.8rem;line-height:1.5">';
 html+='<b>🐱 Питомник</b> — покупает котов, разводит, продаёт в город<br>';
-html+='<b>🏪 Магазин</b> — покупает у питомника, продаёт другим<br>';
-html+='<b>🏦 Банкир</b> — выдаёт кредиты под проценты<br>';
+html+='<b>🏪 Магазин</b> — покупает котов, выставляет на витрину<br>';
+html+='<b>🏦 Банк</b> — кредиты доступны всем игрокам автоматически<br>';
 html+='Сезон длится 5 минут. Цель — заработать больше всех!';
 html+='</p></div>';
 el.innerHTML=html;

@@ -7,7 +7,7 @@ const BREEDS=[
 {id:'scottish',name:'Шотландский',emoji:'😸',base:35,icon:'😸'}
 ];
 const BREED_MAP={};BREEDS.forEach(function(b){BREED_MAP[b.id]=b});
-const ROLE_N='nursery';const ROLE_S='shop';const ROLE_B='banker';
+const ROLE_N='nursery';const ROLE_S='shop';
 const AGE_K='kitten';const AGE_A='adult';
 const START_BAL=300;const SEASON_SEC=300;const MAX_SEASONS=12;
 const HOUSE_SLOTS=4;const HOUSE_PRICE=150;
