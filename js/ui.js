@@ -15,10 +15,6 @@ el=document.getElementById('modal-confirm');if(el)el.onclick=function(){self.mod
 el=document.getElementById('btn-take-loan');if(el)el.onclick=function(){self.actLoan()};
 el=document.getElementById('btn-repay-loan');if(el)el.onclick=function(){self.actRepay()};
 el=document.getElementById('btn-home');if(el)el.onclick=function(){self.goStreet()};
-var bldgs=document.querySelectorAll('.street-building-item');
-for(var i=0;i<bldgs.length;i++){
-(function(b){b.onclick=function(){self.enterView(b.dataset.view)};})(bldgs[i]);
-}
 this.net.on('update',function(room,me){
 self.state=room;self.me=me;
 if(!room)return;
@@ -26,11 +22,12 @@ var codeEl=document.getElementById('d-code');
 if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
 if(room.started){
 self.showScreen('scr-game');
-self.render();
+self.buildStreet();
 }else{
 self.showScreen('scr-wait');
 }
 self.renderWait();
+self.renderInside();
 });
 this.net.on('tick',function(sec){
 var el=document.getElementById('tb-timer');
@@ -41,6 +38,51 @@ self.showModal('Сезон завершён!','<p>Подводим итоги...
 self.net.endSeason();
 });
 });
+};
+
+UI.prototype.goStreet=function(){
+this.view='street';
+var sv=document.getElementById('street-view');
+if(sv)sv.style.display='';
+var ivs=document.querySelectorAll('.inside-view');
+for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
+document.getElementById('btn-home').classList.add('hidden');
+};
+
+UI.prototype.enterBldg=function(uuid,role){
+this.view=uuid;
+var sv=document.getElementById('street-view');
+if(sv)sv.style.display='none';
+var ivs=document.querySelectorAll('.inside-view');
+for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
+var target=role===ROLE_S?'inside-shop':'inside-nursery';
+var el=document.getElementById(target);
+if(el)el.classList.add('active');
+document.getElementById('btn-home').classList.remove('hidden');
+this.renderInside();
+};
+
+UI.prototype.buildStreet=function(){
+var room=this.state;if(!room||!room.players)return;
+var players=room.players;
+var pids=Object.keys(players);
+var nurRow=document.getElementById('nurseries-row');
+var shpRow=document.getElementById('shops-row');
+var nurHtml='';
+var shpHtml='';
+for(var i=0;i<pids.length;i++){
+var p=players[pids[i]];if(!p)continue;
+var isN=p.role===ROLE_N;
+var emoji=isN?'🏠':'🏪';
+var cls=isN?'bldg bldg--nursery':'bldg bldg--shop';
+if(!p.active)cls+=' bldg--bankrupt';
+var onclick="ui.enterBldg('"+pids[i]+"','"+p.role+"')";
+var bldg='<div class="'+cls+'" onclick="'+onclick+'"><div class="bldg__img">'+emoji+'</div><div class="bldg__name">'+(p.name||'Кот')+'</div></div>';
+if(isN)nurHtml+=bldg;
+else shpHtml+=bldg;
+}
+if(nurRow)nurRow.innerHTML=nurHtml;
+if(shpRow)shpRow.innerHTML=shpHtml;
 };
 
 UI.prototype.doCreate=function(){
@@ -71,25 +113,6 @@ var screens=document.querySelectorAll('.screen');
 for(var i=0;i<screens.length;i++){screens[i].classList.remove('active')}
 var el=document.getElementById(id);
 if(el)el.classList.add('active');
-};
-
-UI.prototype.goStreet=function(){
-this.view='street';
-document.getElementById('street-view').classList.remove('hidden');
-var ivs=document.querySelectorAll('.inside-view');
-for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
-document.getElementById('btn-home').classList.add('hidden');
-};
-
-UI.prototype.enterView=function(name){
-this.view=name;
-document.getElementById('street-view').classList.add('hidden');
-var ivs=document.querySelectorAll('.inside-view');
-for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
-var el=document.getElementById('inside-'+name);
-if(el)el.classList.add('active');
-document.getElementById('btn-home').classList.remove('hidden');
-this.render();
 };
 
 UI.prototype.copyCode=function(){
@@ -160,7 +183,7 @@ btnStart.disabled=readyCount<1;
 }
 };
 
-UI.prototype.render=function(){
+UI.prototype.renderInside=function(){
 if(!this.state)return;
 var room=this.state;
 var me=room.players?room.players[this.net.myId]:null;
@@ -175,10 +198,10 @@ if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':'Питомник
 if(balEl)balEl.textContent=fmtN(me.balance||0);
 if(seaEl)seaEl.textContent=room.season||1;
 if(emojiEl)emojiEl.textContent=me.role===ROLE_S?'🏪':'🐱';
-if(this.view==='nursery')this.renderNursery(me,room);
-else if(this.view==='shop')this.renderShop(me,room);
-else if(this.view==='city')this.renderCity(me,room);
-else if(this.view==='bank')this.renderBank(me,room);
+if(me.role===ROLE_N)this.renderNursery(me,room);
+else this.renderShop(me,room);
+this.renderCity(me,room);
+this.renderBank(me,room);
 };
 
 UI.prototype.renderNursery=function(me,room){
@@ -188,9 +211,9 @@ var actionsEl=document.getElementById('nur-actions');
 var houses=me.houses||[];
 var cats=me.cats||{};
 var catKeys=Object.keys(cats);
-var hHtml='<div class="demand-board__title">🏠 Дома</div>';
+var hHtml='<div class="house-card" style="background:#fdf6ee;border:2px solid #b8c9d3;border-radius:10px;margin-bottom:8px;padding:8px"><div style="font-weight:700;font-size:.85rem;color:#1a1a1a;margin-bottom:8px;text-transform:uppercase">🏠 Дома</div>';
 if(houses.length===0){
-hHtml+='<div style="color:#666;font-size:.85rem;padding:10px;text-align:center">Нет домов. Купите дом!</div>';
+hHtml+='<div style="color:#666;font-size:.8rem;text-align:center">Нет домов. Купите дом!</div>';
 }else{
 for(var i=0;i<houses.length;i++){
 var h=houses[i];
@@ -213,10 +236,11 @@ hHtml+='<button class="text_button text_button--color-green" style="margin-top:6
 hHtml+='</div>';
 }
 }
+hHtml+='</div>';
 if(housesEl)housesEl.innerHTML=hHtml;
-var cHtml='';
+var cHtml='<div style="font-weight:700;font-size:.85rem;color:#fdf6ee;text-transform:uppercase;padding:6px">🐱 Коты без дома</div><div style="display:flex;flex-wrap:wrap;gap:6px;width:100%">';
 if(catKeys.length===0){
-cHtml='<div style="color:#fdf6ee;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
+cHtml+='<div style="color:#fdf6ee;font-size:.8rem;padding:10px;text-align:center">Нет котов. Купите кота!</div>';
 }else{
 for(var i=0;i<catKeys.length;i++){
 var cat=cats[catKeys[i]];
@@ -234,6 +258,7 @@ cHtml+='<button class="text_button text_button--color-blue" style="font-size:8px
 cHtml+='</div></div>';
 }
 }
+cHtml+='</div>';
 if(catsEl)catsEl.innerHTML=cHtml;
 var aHtml='';
 aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'kitten\')" title="Купить щенка">🐱</button>';
@@ -248,26 +273,25 @@ var catsEl=document.getElementById('shp-cats');
 var actionsEl=document.getElementById('shp-actions');
 var cats=me.cats||{};
 var catKeys=Object.keys(cats);
-var cHtml='';
+var cHtml='<div style="font-weight:700;font-size:.9rem;color:#1a1a1a;text-transform:uppercase;margin-bottom:8px">🐱 Ваши коты</div>';
 if(catKeys.length===0){
-cHtml='<div style="color:#666;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
+cHtml+='<div style="color:#666;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
 }else{
 for(var i=0;i<catKeys.length;i++){
 var cat=cats[catKeys[i]];
 var ageLabel=cat.age===AGE_K?'Щенок':'Взрослый';
-cHtml+='<div class="cat">';
+cHtml+='<div class="cat" onclick="ui.selectCat(\''+cat.id+'\')">';
 cHtml+='<div class="cat__image">'+cat.emoji+'</div>';
 cHtml+='<div class="cat__count">'+fmtN(cat.price)+' 🪙</div>';
 cHtml+='<div class="cat__description">'+ageLabel+' · '+cat.temper+'</div>';
 cHtml+='<div class="cat__actions">';
-cHtml+='<button class="text_button text_button--color-green" style="font-size:8px;padding:3px 6px" onclick="ui.actSellCat(\''+cat.id+'\')">Продать</button>';
-cHtml+='<button class="text_button text_button--color-blue" style="font-size:8px;padding:3px 6px" onclick="ui.actVitrine(\''+cat.id+'\')">Витрина</button>';
+cHtml+='<button class="text_button text_button--color-green" style="font-size:8px;padding:3px 6px" onclick="event.stopPropagation();ui.actSellCat(\''+cat.id+'\')">Продать</button>';
+cHtml+='<button class="text_button text_button--color-blue" style="font-size:8px;padding:3px 6px" onclick="event.stopPropagation();ui.actVitrine(\''+cat.id+'\')">Витрина</button>';
 cHtml+='</div></div>';
 }
 }
 if(catsEl)catsEl.innerHTML=cHtml;
-var aHtml='';
-aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить кота">🐱</button>';
+var aHtml='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить кота">🐱</button>';
 if(actionsEl)actionsEl.innerHTML=aHtml;
 };
 

@@ -52,8 +52,52 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .header_container .timer-value{font-family:'Courier New',monospace;font-weight:700;color:#02516c}
 .header_container .btns_container{display:flex;align-items:center;gap:8px}
 
-/* OWN NURSERIES */
-.own-nurseries{flex:1;position:relative;overflow:hidden;background:#b3c79b;display:flex;align-items:center;justify-content:center}
+/* HOME BUTTON (back to street) */
+.home-btn{cursor:pointer;padding:6px;display:flex;align-items:center}
+.home-btn svg{width:28px;height:28px;fill:#c6a788}
+@media(max-width:1200px){.home-btn svg{width:20px;height:20px}}
+
+/* MAIN LAYOUT WRAPPER */
+.main-layout-wrap{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;width:100vw;height:100%;background-size:cover;flex:1}
+
+/* STREET VIEW */
+.street-view{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.street-view__section{flex:1;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.street-view__section--nurseries{background:linear-gradient(180deg,#d4d18c 0%,#b3c79b 60%,#a0a1c2 100%)}
+.street-view__section--shops{background:linear-gradient(180deg,#b3c79b 0%,#d4d18c 60%,#b8c9d3 100%)}
+
+/* BUILDING ROW */
+.buildings-row{display:flex;justify-content:center;align-items:flex-end;gap:8px;width:100%;max-width:1200px;margin:0 auto;padding:0 10px 8px}
+
+/* BUILDING ITEM (one per player) */
+.bldg{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .15s;width:16%;min-width:90px;max-width:180px;position:relative}
+.bldg:active{transform:scale(.93)}
+.bldg__img{width:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;line-height:1;padding:8px 0;position:relative}
+.bldg__name{font-size:.7rem;font-weight:700;text-transform:uppercase;color:#873e2a;text-align:center;padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media(max-width:1200px){.bldg__img{font-size:2rem}.bldg__name{font-size:.6rem}}
+
+/* NURSERY BUILDING */
+.bldg--nursery .bldg__img{height:80px;background:linear-gradient(180deg,#a0a1c2 0%,#7b7ca0 100%);border-radius:6px 6px 0 0;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+/* SHOP BUILDING */
+.bldg--shop .bldg__img{height:70px;background:linear-gradient(180deg,#b8c9d3 0%,#8fa5b5 100%);border-radius:6px 6px 0 0;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.bldg--nursery .bldg__name{background:rgba(160,161,194,.6);border-radius:0 0 4px 4px}
+.bldg--shop .bldg__name{background:rgba(184,201,211,.6);border-radius:0 0 4px 4px}
+
+.bldg--bankrupt{opacity:.5;pointer-events:none}
+
+/* ROAD SEPARATOR */
+.street-road{height:16px;background:linear-gradient(180deg,#8b7355,#6b5a42);width:100%;flex-shrink:0;position:relative;z-index:2}
+.street-road::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,#d4d18c 0 20px,transparent 20px 40px);transform:translateY(-1px)}
+
+/* GROUND */
+.street-ground{height:30px;background:linear-gradient(180deg,#b3c79b,#95a97d);flex-shrink:0}
+
+/* INSIDE VIEW */
+.inside-view{flex:1;display:none;flex-direction:column;overflow:hidden;background:#fdf6ee}
+.inside-view.active{display:flex}
+
+/* OWN NURSERIES (inside) */
+.own-nurseries{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .own-nurseries__layout{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:10px;width:90%;max-width:900px;height:85%}
 .own-nurseries__houses-section{grid-column:1/3;grid-row:1/3;background:#fdf6ee;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
 .own-nurseries__cats-section{grid-column:1/3;grid-row:3/5;background:#fdf6ee;border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;overflow-y:auto}
@@ -71,9 +115,8 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .house-card__slots{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .house-card__slot{background:#fdf6ee;border-radius:4px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid #eedbc7}
 .house-card__slot.empty{opacity:.3}
-.house-card__kittens{font-size:.7rem;color:#fdf6ee;margin-top:4px}
 
-/* CAT COMPONENT (original .cat) */
+/* CAT */
 .cat{height:16vh;height:calc(var(--vh,1vh)*16);width:8.7vw;margin:0 8px;display:flex;flex-direction:column;justify-content:space-between;padding:8px;position:relative;background:#fdf6ee;border-radius:12px;cursor:pointer}
 .cat:before{content:'';display:inline-block;position:absolute;top:0;left:0;right:0;bottom:0;border-radius:12px;transition:all .3s}
 @media(hover:hover) and (pointer:fine){.cat:hover:before{background:rgba(255,255,255,.5)}}
@@ -89,40 +132,8 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .cat__actions{display:flex;gap:4px;margin-top:4px;justify-content:center}
 @media(max-width:1200px){.cat__actions{flex-direction:column;gap:2px}}
 
-/* SHOP PAGE */
+/* SHOP INSIDE */
 .shop-page{flex:1;position:relative;overflow:hidden;background:#fdf6ee;display:flex;align-items:center;justify-content:center}
-.shop-page__wrapper{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:12px;width:80%;max-width:700px;height:80%}
-@media(max-width:1200px){.shop-page__wrapper{grid-template-columns:repeat(2,1fr);width:90%;height:auto;gap:8px}}
-
-/* LTD PAGE (city demand + trading) */
-.ltd{flex:1;overflow:auto;padding:18px 10px 18px 16px;align-items:center;background:#fdf6ee}
-@media(max-width:1200px){.ltd{height:calc(100%-55px);padding:8px calc(env(safe-area-inset-right)+8px) 8px calc(env(safe-area-inset-left)+8px)}}
-.ltd__wrap{width:100%;display:flex;flex-direction:column;padding-right:100px}
-@media(max-width:1200px){.ltd__wrap{padding-right:0}}
-.ltd__head{width:100%;background:#b8c9d3;margin-bottom:10px;display:flex;flex-direction:column;align-items:center;border:4px solid #fdf6ee;border-radius:12px;padding:11px}
-@media(max-width:1200px){.ltd__head{border-width:2px}}
-.ltd__head-info{display:flex;width:100%;justify-content:space-between;background:inherit}
-@media(max-width:1200px){.ltd__head-info{flex-direction:column}}
-.ltd__head-info-text{color:#fdf6ee;font-weight:bold;text-align:center;text-transform:uppercase;font-size:14px}
-.ltd__head-info-wrapper{display:flex;align-items:center;flex-direction:column;justify-content:center;margin-left:auto;margin-right:auto;background:inherit;border-radius:16px;padding:13px 0}
-@media(max-width:1200px){.ltd__head-info-wrapper{margin-top:16px;flex-direction:row;padding:0}}
-.ltd__head-info-text-name{color:#191919;font-size:18px;height:40px;display:flex;align-items:center;margin-bottom:15px}
-.ltd__layout{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(6,1fr);grid-gap:10px;height:calc(100%-120px)}
-@media(max-width:1200px){.ltd__layout{grid-template-columns:1fr;grid-template-rows:auto;gap:8px}}
-.ltd__layout>div{border-radius:12px}
-.ltd__content{grid-column:1/3;grid-row:1/5;background:#fdf6ee;display:flex;flex-direction:column;height:calc(100%-20px);margin-top:20px;border-radius:0 0 16px 16px!important}
-@media(max-width:1200px){.ltd__content{grid-column:1;grid-row:auto;border-radius:0 0 8px 8px!important}}
-.ltd__content-tabs{height:29px;margin-bottom:20px;display:flex;margin-top:-20px}
-@media(max-width:1200px){.ltd__content-tabs{height:20px;margin-top:-19px;margin-bottom:6px}}
-.ltd__content-tab{cursor:pointer;text-transform:uppercase;font-size:16px;font-weight:bold;background:#fbeddd;border-radius:16px 16px 0 0;text-align:center;width:100%;height:29px;display:flex;align-items:center;justify-content:center;color:#c6a788;padding-top:3px}
-@media(max-width:1200px){.ltd__content-tab{border-radius:8px 8px 0 0}}
-.ltd__content-tab--active{cursor:inherit;color:#1a1a1a;background:#fdf6ee}
-.ltd__bank{background:#b1b2ca;grid-column:1/3;grid-row:5/7}
-@media(max-width:1200px){.ltd__bank{grid-column:1;grid-row:auto}}
-.ltd__payment-fine{background:#b1b2ca;grid-column:3;grid-row:1/3}
-.ltd__delivery-fine{background:#b1b2ca;grid-column:3;grid-row:3/5}
-.ltd__quality-fine{background:#b1b2ca;grid-column:3;grid-row:5/7}
-@media(max-width:1200px){.ltd__payment-fine,.ltd__delivery-fine,.ltd__quality-fine{grid-column:1;grid-row:auto}}
 
 /* DEMAND ROW */
 .demand-row{display:flex;align-items:center;justify-content:space-between;padding:8px;background:#fdf6ee;border-bottom:1px solid #b8c9d3}
@@ -132,42 +143,17 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .demand-price{color:#02516c;font-weight:700}
 .demand-count{color:#666;font-size:.75rem}
 
-/* CAT STORAGE */
-.ltd__content-storage{margin:0 15px 10px;display:flex;background:#b3c79b;padding:10px;border-radius:16px}
-@media(max-width:1200px){.ltd__content-storage{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px;flex-wrap:wrap}}
-.ltd__content-storage-cats{width:75%;display:flex;padding-right:20px;flex-wrap:wrap;gap:6px}
-@media(max-width:1200px){.ltd__content-storage-cats{width:100%}}
-.ltd__content-storage-timer{width:25%;display:flex;flex-direction:column;justify-content:space-around}
-@media(max-width:1200px){.ltd__content-storage-timer{width:100%;flex-direction:row;gap:10px}}
+/* CONTENT STORAGE */
+.content-storage{margin:0 15px 10px;display:flex;background:#b3c79b;padding:10px;border-radius:16px;gap:10px;align-items:center}
+@media(max-width:1200px){.content-storage{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px;flex-wrap:wrap}}
+.content-storage__cats{flex:1;display:flex;flex-wrap:wrap;gap:6px}
+.content-storage__actions{display:flex;flex-direction:column;gap:6px}
+@media(max-width:1200px){.content-storage__actions{flex-direction:row;flex-wrap:wrap;width:100%}}
 
-/* FORM CAT */
-.ltd-form-cat{width:10%;margin-left:2%;display:flex;flex-direction:column}
-@media(max-width:1200px){.ltd-form-cat{width:calc(33%-4px);margin-left:2%}}
-.ltd-form-cat__img-count{text-align:center;height:100%;margin-bottom:10px;background:#fdf6ee;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px}
-.ltd-form-cat__img-count-image{width:100%;height:50px;background-size:contain;background-position:center;background-repeat:no-repeat;margin-top:5px;display:flex;align-items:center;justify-content:center;font-size:2rem}
-.ltd-form-cat__price{min-height:40px;background:#fdf6ee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#02516c;font-size:.85rem}
-
-/* BANK */
-.ltd-bank-guarantee__wrapper{display:flex;flex-direction:column;justify-content:space-around;height:100%;padding:20px}
-@media(max-width:1200px){.ltd-bank-guarantee__wrapper{padding:12px;gap:10px}}
-.ltd-bank_guarantee__text{font-style:normal;font-weight:normal;font-size:14px;line-height:normal;text-transform:uppercase;color:#fdf6ee;padding-bottom:15px}
-@media(max-width:1200px){.ltd-bank_guarantee__text{font-size:10px}}
-.ltd-bank_guarantee__text-bold{font-weight:bold}
-.ltd-bank_guarantee__block-main{display:flex;justify-content:flex-start;align-items:center;height:100%;flex-wrap:wrap;gap:10px}
-
-/* FINE */
-.ltd-fine{display:flex;flex-direction:column;justify-content:space-around;height:100%;padding:20px}
-@media(max-width:1200px){.ltd-fine{padding:12px;gap:12px}}
-.ltd-fine__value{display:flex;justify-content:space-between;align-items:center;min-height:28px}
-.ltd-fine__title{color:#fdf6ee;font-weight:700;font-size:12px;text-transform:uppercase;text-align:center}
-
-/* NUMBER INPUT */
-.number-input-wrapper{position:relative;width:108px;background:#fdf6ee;border:1px solid #eedbc7;border-radius:6px;height:28px;display:flex;align-items:center}
-.number-input-wrapper--readonly{background:#fbeddd}
-.number-input-wrapper__delimiter{width:1px;height:80%;background:#eedbc7;margin:3px 0}
-.number-input{width:100%;min-height:40px;background:none;font-size:20px;outline:none;border:none;text-align:center;font-weight:bold;color:#1a1a1a;appearance:none;-webkit-appearance:none;-moz-appearance:none}
-.number-input::placeholder{color:#eedbc7}
-@media(min-width:1201px){.number-input-wrapper{height:40px}}
+/* DEMAND BOARD */
+.demand-board{background:#fdf6ee;border:2px solid #b8c9d3;border-radius:12px;padding:10px;margin:0 15px 10px}
+@media(max-width:1200px){.demand-board{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px}}
+.demand-board__title{font-weight:700;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px;text-align:center}
 
 /* TEXT BUTTON */
 .text_button{padding:9px 22px 9px;box-shadow:inset 0px 3px 0px rgba(255,255,255,.3),inset -3px -3px 0px rgba(0,0,0,.2);border-radius:8px;cursor:pointer;font-style:normal;font-weight:bold;font-size:20px;line-height:27px;text-transform:uppercase;color:#fffbe5;margin:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;border:none}
@@ -189,9 +175,6 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .own-nurseries__actions-item:hover{opacity:.85}
 .own-nurseries__actions-item--disabled{opacity:.4;pointer-events:none}
 @media(max-width:1200px){.own-nurseries__actions-item{width:48px;height:48px;font-size:1.2rem}}
-
-/* CONTENT TABS */
-.tab-content{display:none}.tab-content.active{display:flex;flex-direction:column;height:100%}
 
 /* MODAL */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100}
@@ -219,38 +202,23 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 /* HOST SECTION */
 #host-sec{display:flex;flex-direction:column;gap:8px}
 
-/* STREET VIEW */
-.street-view{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.street-view__sky{flex:1;background:linear-gradient(180deg,#b8c9d3 0%,#d4d18c 60%,#c6a788 100%);display:flex;align-items:flex-end;justify-content:center;padding:0 10px 0}
-.street-view__buildings{display:flex;justify-content:center;align-items:flex-end;gap:8px;width:100%;max-width:800px;padding-bottom:0}
-.street-building-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .15s;width:22%;max-width:160px;min-width:70px}
-.street-building-item:active{transform:scale(.93)}
-.street-building-item .sb-icon{width:100%;aspect-ratio:4/5;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:2.8rem;position:relative}
-.street-building-item .sb-icon::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:4px;background:#555;border-radius:2px}
-.sb-nursery .sb-icon{background:linear-gradient(180deg,#a0a1c2,#7b7ca0)}
-.sb-shop .sb-icon{background:linear-gradient(180deg,#b8c9d3,#8fa5b5)}
-.sb-city .sb-icon{background:linear-gradient(180deg,#abc1e2,#7a98c4)}
-.sb-bank .sb-icon{background:linear-gradient(180deg,#d4d18c,#b5b26e)}
-.street-building-item .sb-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:#fdf6ee;background:rgba(0,0,0,.3);width:100%;text-align:center;padding:3px 0;border-radius:0 0 6px 6px}
-@media(max-width:1200px){.street-building-item .sb-icon{font-size:2rem}.street-building-item .sb-label{font-size:.55rem}}
-@media(max-width:600px){.street-view__buildings{gap:4px}.street-building-item .sb-icon{font-size:1.6rem;border-radius:6px 6px 0 0}}
+/* BANK */
+.ltd__bank{background:#b1b2ca;border-radius:12px;padding:10px}
+.ltd-bank-guarantee__wrapper{display:flex;flex-direction:column;justify-content:space-around;height:100%;padding:20px}
+@media(max-width:1200px){.ltd-bank-guarantee__wrapper{padding:12px;gap:10px}}
+.ltd-bank_guarantee__text{font-style:normal;font-weight:normal;font-size:14px;line-height:normal;text-transform:uppercase;color:#fdf6ee;padding-bottom:15px}
+@media(max-width:1200px){.ltd-bank_guarantee__text{font-size:10px}}
+.ltd-bank_guarantee__text-bold{font-weight:bold}
+.ltd-bank_guarantee__block-main{display:flex;justify-content:flex-start;align-items:center;height:100%;flex-wrap:wrap;gap:10px}
 
-.street-road{height:18px;background:linear-gradient(180deg,#8b7355,#6b5a42);width:100%;flex-shrink:0;position:relative}
-.street-road::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,#d4d18c 0 20px,transparent 20px 40px);transform:translateY(-1px)}
-.street-ground{height:40px;background:linear-gradient(180deg,#b3c79b,#95a97d);flex-shrink:0}
+/* NUMBER INPUT */
+.number-input-wrapper{position:relative;width:108px;background:#fdf6ee;border:1px solid #eedbc7;border-radius:6px;height:28px;display:flex;align-items:center}
+.number-input{width:100%;min-height:40px;background:none;font-size:20px;outline:none;border:none;text-align:center;font-weight:bold;color:#1a1a1a}
+@media(min-width:1201px){.number-input-wrapper{height:40px}}
 
-/* INSIDE VIEW (building interior) */
-.inside-view{flex:1;display:none;flex-direction:column;overflow:hidden}
-.inside-view.active{display:flex}
-.street-view.hidden{display:none}
-.home-btn{cursor:pointer;padding:6px;display:flex;align-items:center}
-.home-btn svg{width:28px;height:28px;fill:#c6a788}
-@media(max-width:1200px){.home-btn svg{width:20px;height:20px}}
-
-/* HIDDEN */
+/* INPUT */
 .inp{padding:12px;border:2px solid #b8c9d3;border-radius:12px;font-size:1.1rem;background:#fdf6ee;text-align:center;font-family:'Courier New',monospace;letter-spacing:6px;outline:none;color:#1a1a1a}
 .inp:focus{border-color:#02516c}
-.inp--sm{padding:6px 10px;font-size:.85rem;letter-spacing:0}
 
 /* DIVIDER */
 .divider{display:flex;align-items:center;gap:10px;color:#999;font-size:.75rem}
@@ -259,18 +227,6 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 /* OVER */
 #scr-over{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);align-items:center;justify-content:center;flex-direction:column}
 #scr-over h1{font-size:1.5rem;color:#1a1a1a;font-weight:bold;text-transform:uppercase;margin-bottom:10px}
-
-/* CONTENT STORAGE */
-.content-storage{margin:0 15px 10px;display:flex;background:#b3c79b;padding:10px;border-radius:16px;gap:10px;align-items:center}
-@media(max-width:1200px){.content-storage{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px;flex-wrap:wrap}}
-.content-storage__cats{flex:1;display:flex;flex-wrap:wrap;gap:6px}
-.content-storage__actions{display:flex;flex-direction:column;gap:6px}
-@media(max-width:1200px){.content-storage__actions{flex-direction:row;flex-wrap:wrap;width:100%}}
-
-/* DEMAND BOARD */
-.demand-board{background:#fdf6ee;border:2px solid #b8c9d3;border-radius:12px;padding:10px;margin:0 15px 10px}
-@media(max-width:1200px){.demand-board{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px}}
-.demand-board__title{font-weight:700;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px;text-align:center}
 </style>
 </head>
 <body>
@@ -333,53 +289,59 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </header>
 
-<!-- STREET VIEW (default) -->
+<div class="main-layout-wrap">
+
+<!-- STREET VIEW: buildings for each player -->
 <div id="street-view" class="street-view">
-<div class="street-view__sky">
-<div class="street-view__buildings">
-<div class="street-building-item sb-nursery" data-view="nursery"><div class="sb-icon">🏠</div><div class="sb-label">Питомник</div></div>
-<div class="street-building-item sb-shop" data-view="shop"><div class="sb-icon">🏪</div><div class="sb-label">Магазин</div></div>
-<div class="street-building-item sb-city" data-view="city"><div class="sb-icon">🏙</div><div class="sb-label">Город</div></div>
-<div class="street-building-item sb-bank" data-view="bank"><div class="sb-icon">🏦</div><div class="sb-label">Банк</div></div>
+<!-- Nurseries row -->
+<div class="street-view__section street-view__section--nurseries">
+<div id="nurseries-row" class="buildings-row"></div>
 </div>
-</div>
+<!-- Road -->
 <div class="street-road"></div>
+<!-- Shops row -->
+<div class="street-view__section street-view__section--shops">
+<div id="shops-row" class="buildings-row"></div>
+</div>
+<!-- Ground -->
 <div class="street-ground"></div>
 </div>
 
 <!-- INSIDE: NURSERY -->
 <div id="inside-nursery" class="inside-view">
-<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
-<div id="nur-houses" class="demand-board"><div class="demand-board__title">🏠 Дома</div></div>
-<div class="content-storage">
-<div id="nur-cats" class="content-storage__cats"></div>
-<div id="nur-actions" class="content-storage__actions"></div>
+<div class="own-nurseries" style="background:#b3c79b">
+<div class="own-nurseries__layout">
+<div id="nur-houses" class="own-nurseries__houses-section"></div>
+<div id="nur-cats" class="own-nurseries__cats-section"></div>
+<div id="nur-actions" class="own-nurseries__actions"></div>
 </div>
 </div>
 </div>
 
 <!-- INSIDE: SHOP -->
 <div id="inside-shop" class="inside-view">
-<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div class="shop-page">
+<div style="width:90%;max-width:700px;display:flex;flex-direction:column;gap:12px;padding:16px">
 <div class="content-storage">
 <div id="shp-cats" class="content-storage__cats"></div>
 <div id="shp-actions" class="content-storage__actions"></div>
 </div>
 </div>
 </div>
+</div>
 
 <!-- INSIDE: CITY -->
-<div id="inside-city" class="inside-view">
-<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div id="inside-city" class="inside-view" style="overflow:auto">
+<div style="padding:10px">
 <div id="city-demand" class="demand-board"><div class="demand-board__title">🏙 Городской спрос</div></div>
 <div id="city-trade" class="demand-board"><div class="demand-board__title">🛒 Магазин игроков</div></div>
 </div>
 </div>
 
 <!-- INSIDE: BANK -->
-<div id="inside-bank" class="inside-view">
-<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
-<div id="bank-section" class="ltd__bank" style="border-radius:12px;padding:10px;height:auto">
+<div id="inside-bank" class="inside-view" style="overflow:auto">
+<div style="padding:10px">
+<div class="ltd__bank" style="border-radius:12px;height:auto">
 <div class="ltd-bank-guarantee__wrapper">
 <div id="bank-info" class="ltd-bank_guarantee__text"></div>
 <div class="ltd-bank_guarantee__block-main">
@@ -395,7 +357,9 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </div>
 </div>
-</div>
+
+</div><!-- main-layout-wrap -->
+</div><!-- scr-game -->
 
 <!-- OVER -->
 <div id="scr-over" class="screen">
