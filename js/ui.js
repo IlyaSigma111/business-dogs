@@ -29,6 +29,7 @@ this.renderGame();
 this.net.on('joined',code=>{
 document.getElementById('d-code').textContent=code;
 this.showScreen('scr-wait');
+if(this.state)this.renderWait(this.state);
 });
 this.net.on('tick',t=>{
 const el=document.getElementById('tb-timer');
@@ -111,6 +112,7 @@ navigator.clipboard?.writeText(code).then(()=>this.toast('Код скопиро�
 renderWait(room){
 if(!room)return;
 const grid=document.getElementById('wait-players');
+if(!grid)return;
 const entries=Object.entries(room.players||{});
 const players=entries.map(([id,p])=>({id,...(p||{})}));
 
