@@ -219,12 +219,35 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 /* HOST SECTION */
 #host-sec{display:flex;flex-direction:column;gap:8px}
 
-/* NAVIGATION TABS */
-.nav-tabs{display:flex;background:#fdf6ee;border-top:4px solid #b8c9d3;flex-shrink:0}
-.nav-tab{flex:1;padding:10px;background:none;border:none;color:#666;font-size:1.3rem;cursor:pointer;transition:all .15s;border-top:2px solid transparent}
-.nav-tab.active{color:#02516c;border-top-color:#02516c}
+/* STREET VIEW */
+.street-view{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.street-view__sky{flex:1;background:linear-gradient(180deg,#b8c9d3 0%,#d4d18c 60%,#c6a788 100%);display:flex;align-items:flex-end;justify-content:center;padding:0 10px 0}
+.street-view__buildings{display:flex;justify-content:center;align-items:flex-end;gap:8px;width:100%;max-width:800px;padding-bottom:0}
+.street-building-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .15s;width:22%;max-width:160px;min-width:70px}
+.street-building-item:active{transform:scale(.93)}
+.street-building-item .sb-icon{width:100%;aspect-ratio:4/5;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;font-size:2.8rem;position:relative}
+.street-building-item .sb-icon::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:4px;background:#555;border-radius:2px}
+.sb-nursery .sb-icon{background:linear-gradient(180deg,#a0a1c2,#7b7ca0)}
+.sb-shop .sb-icon{background:linear-gradient(180deg,#b8c9d3,#8fa5b5)}
+.sb-city .sb-icon{background:linear-gradient(180deg,#abc1e2,#7a98c4)}
+.sb-bank .sb-icon{background:linear-gradient(180deg,#d4d18c,#b5b26e)}
+.street-building-item .sb-label{font-size:.65rem;font-weight:700;text-transform:uppercase;color:#fdf6ee;background:rgba(0,0,0,.3);width:100%;text-align:center;padding:3px 0;border-radius:0 0 6px 6px}
+@media(max-width:1200px){.street-building-item .sb-icon{font-size:2rem}.street-building-item .sb-label{font-size:.55rem}}
+@media(max-width:600px){.street-view__buildings{gap:4px}.street-building-item .sb-icon{font-size:1.6rem;border-radius:6px 6px 0 0}}
 
-/* INPUT */
+.street-road{height:18px;background:linear-gradient(180deg,#8b7355,#6b5a42);width:100%;flex-shrink:0;position:relative}
+.street-road::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,#d4d18c 0 20px,transparent 20px 40px);transform:translateY(-1px)}
+.street-ground{height:40px;background:linear-gradient(180deg,#b3c79b,#95a97d);flex-shrink:0}
+
+/* INSIDE VIEW (building interior) */
+.inside-view{flex:1;display:none;flex-direction:column;overflow:hidden}
+.inside-view.active{display:flex}
+.street-view.hidden{display:none}
+.home-btn{cursor:pointer;padding:6px;display:flex;align-items:center}
+.home-btn svg{width:28px;height:28px;fill:#c6a788}
+@media(max-width:1200px){.home-btn svg{width:20px;height:20px}}
+
+/* HIDDEN */
 .inp{padding:12px;border:2px solid #b8c9d3;border-radius:12px;font-size:1.1rem;background:#fdf6ee;text-align:center;font-family:'Courier New',monospace;letter-spacing:6px;outline:none;color:#1a1a1a}
 .inp:focus{border-color:#02516c}
 .inp--sm{padding:6px 10px;font-size:.85rem;letter-spacing:0}
@@ -287,6 +310,9 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 <div id="scr-game" class="screen" style="flex-direction:column">
 <header id="topbar" class="header_container">
 <div class="left_side_container">
+<span id="btn-home" class="home-btn hidden" title="На улицу">
+<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+</span>
 <div class="avatar_container">
 <span id="tb-emoji" class="avatar-icon">🐱</span>
 <div class="player-info">
@@ -307,14 +333,24 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </header>
 
-<!-- NURSERY TAB -->
-<div id="tab-nursery" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
-<!-- Houses -->
-<div id="nur-houses" class="demand-board">
-<div class="demand-board__title">🏠 Дома</div>
+<!-- STREET VIEW (default) -->
+<div id="street-view" class="street-view">
+<div class="street-view__sky">
+<div class="street-view__buildings">
+<div class="street-building-item sb-nursery" data-view="nursery"><div class="sb-icon">🏠</div><div class="sb-label">Питомник</div></div>
+<div class="street-building-item sb-shop" data-view="shop"><div class="sb-icon">🏪</div><div class="sb-label">Магазин</div></div>
+<div class="street-building-item sb-city" data-view="city"><div class="sb-icon">🏙</div><div class="sb-label">Город</div></div>
+<div class="street-building-item sb-bank" data-view="bank"><div class="sb-icon">🏦</div><div class="sb-label">Банк</div></div>
 </div>
-<!-- Cats without home -->
+</div>
+<div class="street-road"></div>
+<div class="street-ground"></div>
+</div>
+
+<!-- INSIDE: NURSERY -->
+<div id="inside-nursery" class="inside-view">
+<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div id="nur-houses" class="demand-board"><div class="demand-board__title">🏠 Дома</div></div>
 <div class="content-storage">
 <div id="nur-cats" class="content-storage__cats"></div>
 <div id="nur-actions" class="content-storage__actions"></div>
@@ -322,8 +358,8 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </div>
 
-<!-- SHOP TAB -->
-<div id="tab-shop" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<!-- INSIDE: SHOP -->
+<div id="inside-shop" class="inside-view">
 <div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
 <div class="content-storage">
 <div id="shp-cats" class="content-storage__cats"></div>
@@ -332,20 +368,16 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </div>
 
-<!-- CITY TAB -->
-<div id="tab-city" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<!-- INSIDE: CITY -->
+<div id="inside-city" class="inside-view">
 <div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
-<div id="city-demand" class="demand-board">
-<div class="demand-board__title">🏙 Городской спрос</div>
-</div>
-<div id="city-trade" class="demand-board">
-<div class="demand-board__title">🛒 Магазин игроков</div>
-</div>
+<div id="city-demand" class="demand-board"><div class="demand-board__title">🏙 Городской спрос</div></div>
+<div id="city-trade" class="demand-board"><div class="demand-board__title">🛒 Магазин игроков</div></div>
 </div>
 </div>
 
-<!-- BANK TAB -->
-<div id="tab-bank" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<!-- INSIDE: BANK -->
+<div id="inside-bank" class="inside-view">
 <div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
 <div id="bank-section" class="ltd__bank" style="border-radius:12px;padding:10px;height:auto">
 <div class="ltd-bank-guarantee__wrapper">
@@ -363,13 +395,6 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 </div>
 </div>
 </div>
-
-<nav class="nav-tabs">
-<button class="nav-tab active" data-tab="nursery">🏠</button>
-<button class="nav-tab" data-tab="shop">🐱</button>
-<button class="nav-tab" data-tab="city">🏙</button>
-<button class="nav-tab" data-tab="bank">🏦</button>
-</nav>
 </div>
 
 <!-- OVER -->

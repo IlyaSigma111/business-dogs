@@ -1,4 +1,4 @@
-function UI(net){this.net=net;this.state=null;this.me=null;this.tab='nursery'}
+function UI(net){this.net=net;this.state=null;this.me=null;this.view='street'}
 UI.prototype.init=function(){
 var self=this;
 var el;
@@ -14,15 +14,10 @@ el=document.getElementById('modal-cancel');if(el)el.onclick=function(){self.hide
 el=document.getElementById('modal-confirm');if(el)el.onclick=function(){self.modalConfirm()};
 el=document.getElementById('btn-take-loan');if(el)el.onclick=function(){self.actLoan()};
 el=document.getElementById('btn-repay-loan');if(el)el.onclick=function(){self.actRepay()};
-var navBtns=document.querySelectorAll('.nav-tab');
-for(var i=0;i<navBtns.length;i++){
-(function(b){b.onclick=function(){
-for(var j=0;j<navBtns.length;j++)navBtns[j].classList.remove('active');
-b.classList.add('active');
-self.tab=b.dataset.tab;
-self.showActiveTab();
-self.render();
-};})(navBtns[i]);
+el=document.getElementById('btn-home');if(el)el.onclick=function(){self.goStreet()};
+var bldgs=document.querySelectorAll('.street-building-item');
+for(var i=0;i<bldgs.length;i++){
+(function(b){b.onclick=function(){self.enterView(b.dataset.view)};})(bldgs[i]);
 }
 this.net.on('update',function(room,me){
 self.state=room;self.me=me;
@@ -31,11 +26,11 @@ var codeEl=document.getElementById('d-code');
 if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
 if(room.started){
 self.showScreen('scr-game');
+self.render();
 }else{
 self.showScreen('scr-wait');
 }
 self.renderWait();
-self.render();
 });
 this.net.on('tick',function(sec){
 var el=document.getElementById('tb-timer');
@@ -78,11 +73,23 @@ var el=document.getElementById(id);
 if(el)el.classList.add('active');
 };
 
-UI.prototype.showActiveTab=function(){
-var tabs=document.querySelectorAll('.tab-content');
-for(var i=0;i<tabs.length;i++){tabs[i].classList.remove('active')}
-var el=document.getElementById('tab-'+this.tab);
+UI.prototype.goStreet=function(){
+this.view='street';
+document.getElementById('street-view').classList.remove('hidden');
+var ivs=document.querySelectorAll('.inside-view');
+for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
+document.getElementById('btn-home').classList.add('hidden');
+};
+
+UI.prototype.enterView=function(name){
+this.view=name;
+document.getElementById('street-view').classList.add('hidden');
+var ivs=document.querySelectorAll('.inside-view');
+for(var i=0;i<ivs.length;i++)ivs[i].classList.remove('active');
+var el=document.getElementById('inside-'+name);
 if(el)el.classList.add('active');
+document.getElementById('btn-home').classList.remove('hidden');
+this.render();
 };
 
 UI.prototype.copyCode=function(){
@@ -168,10 +175,10 @@ if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':'Питомник
 if(balEl)balEl.textContent=fmtN(me.balance||0);
 if(seaEl)seaEl.textContent=room.season||1;
 if(emojiEl)emojiEl.textContent=me.role===ROLE_S?'🏪':'🐱';
-if(this.tab==='nursery')this.renderNursery(me,room);
-else if(this.tab==='shop')this.renderShop(me,room);
-else if(this.tab==='city')this.renderCity(me,room);
-else if(this.tab==='bank')this.renderBank(me,room);
+if(this.view==='nursery')this.renderNursery(me,room);
+else if(this.view==='shop')this.renderShop(me,room);
+else if(this.view==='city')this.renderCity(me,room);
+else if(this.view==='bank')this.renderBank(me,room);
 };
 
 UI.prototype.renderNursery=function(me,room){
@@ -181,8 +188,6 @@ var actionsEl=document.getElementById('nur-actions');
 var houses=me.houses||[];
 var cats=me.cats||{};
 var catKeys=Object.keys(cats);
-
-// Houses
 var hHtml='<div class="demand-board__title">🏠 Дома</div>';
 if(houses.length===0){
 hHtml+='<div style="color:#666;font-size:.85rem;padding:10px;text-align:center">Нет домов. Купите дом!</div>';
@@ -209,8 +214,6 @@ hHtml+='</div>';
 }
 }
 if(housesEl)housesEl.innerHTML=hHtml;
-
-// Cats
 var cHtml='';
 if(catKeys.length===0){
 cHtml='<div style="color:#fdf6ee;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
@@ -232,8 +235,6 @@ cHtml+='</div></div>';
 }
 }
 if(catsEl)catsEl.innerHTML=cHtml;
-
-// Actions
 var aHtml='';
 aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'kitten\')" title="Купить щенка">🐱</button>';
 aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить взрослого">😺</button>';
@@ -247,7 +248,6 @@ var catsEl=document.getElementById('shp-cats');
 var actionsEl=document.getElementById('shp-actions');
 var cats=me.cats||{};
 var catKeys=Object.keys(cats);
-
 var cHtml='';
 if(catKeys.length===0){
 cHtml='<div style="color:#666;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
@@ -266,10 +266,8 @@ cHtml+='</div></div>';
 }
 }
 if(catsEl)catsEl.innerHTML=cHtml;
-
 var aHtml='';
 aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить кота">🐱</button>';
-aHtml+='<button class="own-nurseries__actions-item" onclick="ui.tabCity()" title="Город">🏙</button>';
 if(actionsEl)actionsEl.innerHTML=aHtml;
 };
 
@@ -289,7 +287,6 @@ dHtml+='<span class="demand-count">x'+d.count+'</span>';
 dHtml+='</div>';
 }
 if(demEl)demEl.innerHTML=dHtml;
-
 var vitAll=[];
 var players=room.players||{};
 var self=this;
@@ -421,17 +418,6 @@ var amount=el?parseInt(el.value):100;
 if(!amount||amount<=0)return this.toast('Укажи сумму',1);
 var self=this;
 this.net.repayLoan(amount).then(function(r){if(r&&r.ok)self.toast('Кредит возвращён');else if(r&&r.err)self.toast(r.err,2)});
-};
-
-UI.prototype.tabCity=function(){
-this.tab='city';
-var navBtns=document.querySelectorAll('.nav-tab');
-for(var i=0;i<navBtns.length;i++){
-if(navBtns[i].dataset.tab==='city'){navBtns[i].classList.add('active')}
-else{navBtns[i].classList.remove('active')}
-}
-this.showActiveTab();
-this.render();
 };
 
 UI.prototype.hideModal=function(){
