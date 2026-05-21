@@ -1,10 +1,10 @@
 const BREEDS=[
-{id:'british',name:'Британец',emoji:'🐱',base:30,icon:'🐱'},
-{id:'mainecoon',name:'Мейн-кун',emoji:'🐈',base:50,icon:'🐈'},
-{id:'siamese',name:'Сиамский',emoji:'😺',base:40,icon:'😺'},
-{id:'sphynx',name:'Сфинкс',emoji:'🐈‍⬛',base:60,icon:'🐈‍⬛'},
-{id:'persian',name:'Персидский',emoji:'🐾',base:45,icon:'🐾'},
-{id:'scottish',name:'Шотландский',emoji:'😸',base:35,icon:'😸'}
+{id:'british',name:'Британец',emoji:'🐱',base:30},
+{id:'mainecoon',name:'Мейн-кун',emoji:'🐈',base:50},
+{id:'siamese',name:'Сиамский',emoji:'😺',base:40},
+{id:'sphynx',name:'Сфинкс',emoji:'🐈‍⬛',base:60},
+{id:'persian',name:'Персидский',emoji:'🐾',base:45},
+{id:'scottish',name:'Шотландский',emoji:'😸',base:35}
 ];
 const BREED_MAP={};BREEDS.forEach(function(b){BREED_MAP[b.id]=b});
 const ROLE_N='nursery';const ROLE_S='shop';
@@ -19,13 +19,13 @@ const DEMAND_POOL=[
 {breed:'persian',price:50,count:2},
 {breed:'scottish',price:40,count:3}
 ];
-const CAT_NAMES=['Бонифаций','Полосатый','Любимец','Мурзик','Леопольд','Том','Матильда','Гарфилд','Симба','Матроскин','Феликс','Котопфей','Мурка','Барсик','Рыжик','Пушок','Снежок','Кузя','Васька','Масик','Тишка','Бублик','Зефир','Пират','Граф','Лорд','Султан','Барон','Шарик','Тимоша'];
+const CAT_NAMES=['Бонифаций','Полосатый','Любимец','Мурзик','Леопольд','Том','Матильда','Гарфилд','Симба','Матроскин','Феликс','Котофей','Мурка','Барсик','Рыжик','Пушок','Снежок','Кузя','Васька','Масик','Тишка','Бублик','Зефир','Пират','Граф','Лорд','Султан','Барон','Шарик','Тимоша'];
 function genName(){return CAT_NAMES[Math.floor(Math.random()*CAT_NAMES.length)]}
 function makeCat(breed,age){
 var b=BREED_MAP[breed];if(!b)return null;
 var mult=age===AGE_K?0.6:1;
 var temps=['Ласковый','Игривый','Спокойный','Гордый','Шаловливый','Нежный'];
-return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),breed:breed,name:b.name,emoji:b.icon,age:age,temper:temps[Math.floor(Math.random()*temps.length)],price:Math.round(b.base*mult)};
+return{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),breed:breed,name:b.name,emoji:b.emoji,age:age,temper:temps[Math.floor(Math.random()*temps.length)],price:Math.round(b.base*mult)};
 }
 function makeHouse(){return{adults:{},kittens:{},id:'h'+Date.now().toString(36)}}
 function genCode(){return String(Math.floor(100000+Math.random()*900000))}

@@ -2,43 +2,117 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Business Cats</title>
+<meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Business cats</title>
 <link rel="stylesheet" href="css/style.css">
+<style>
+html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:#fdf6ee}
+.screen{display:none;height:100%;height:calc(var(--vh,1vh)*100)}.screen.active{display:flex}
+#scr-lobby,#scr-over{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);align-items:center;justify-content:center;flex-direction:column}
+#scr-lobby h1{font-size:2rem;color:#1a1a1a;font-weight:bold;text-transform:uppercase;margin-bottom:10px}
+#scr-lobby p{color:#666;font-size:.9rem;margin-bottom:20px}
+.lobby-box{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:20px;width:90%;max-width:380px;display:flex;flex-direction:column;gap:14px}
+.text_button{background:#02516c;color:#fdf6ee;border:none;border-radius:12px;padding:12px 20px;font-size:1rem;font-weight:bold;cursor:pointer;text-transform:uppercase;width:100%;transition:all .15s}
+.text_button:active{transform:scale(.97)}.text_button:disabled{opacity:.4}
+.text_button--green{background:#b3c79b;color:#1a1a1a}
+.text_button--purple{background:#a855f7;color:#fff}
+.inp{padding:12px;border:2px solid #b8c9d3;border-radius:12px;font-size:1.1rem;background:#fdf6ee;text-align:center;font-family:'Courier New',monospace;letter-spacing:6px;outline:none;color:#1a1a1a}
+.inp:focus{border-color:#02516c}
+.divider{display:flex;align-items:center;gap:10px;color:#999;font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#b8c9d3}
+.lobby-hint{font-size:.75rem;color:#999;text-align:center}
+#scr-wait{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);flex-direction:column}
+.wait-wrap{padding:20px;width:100%;max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.wait-wrap h2{font-size:1.1rem;color:#1a1a1a;text-align:center;text-transform:uppercase}
+.code-text{color:#02516c;font-family:'Courier New',monospace}
+.player-list{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto}
+.p-card{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fdf6ee;border:2px solid #b8c9d3;border-radius:10px}
+.p-card .p-left{display:flex;align-items:center;gap:10px}
+.p-card .p-name{font-weight:700;font-size:.9rem;color:#1a1a1a}
+.p-card .p-role{font-size:.7rem;color:#666;text-transform:uppercase}
+.p-card .p-right{display:flex;align-items:center;gap:8px}
+.p-ready{width:10px;height:10px;border-radius:50%}.p-ready.y{background:#b3c79b}.p-ready.n{background:#d63031}
+.p-kick-btn,.p-role-btn{background:none;border:none;font-size:1rem;cursor:pointer;padding:4px;opacity:.6}
+.p-kick-btn:hover,.p-role-btn:hover{opacity:1}
+.hidden{display:none!important}
+.chk{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#1a1a1a}
+.chk input{width:18px;height:18px;accent-color:#02516c}
+#topbar{background:#fdf6ee;border-bottom:4px solid #b8c9d3;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
+.tb-left{display:flex;align-items:center;gap:8px}
+.tb-emoji{font-size:1.5rem}
+.tb-info{display:flex;flex-direction:column}
+.tb-name{font-weight:700;font-size:.8rem;color:#1a1a1a}
+.tb-role{font-size:.65rem;color:#666;text-transform:uppercase}
+.tb-center{display:flex;align-items:center;gap:4px}
+.tb-val{font-family:'Courier New',monospace;font-size:1.05rem;font-weight:800;color:#02516c}
+.tb-right{display:flex;align-items:center;gap:3px;font-size:.8rem}
+.tb-sea{font-weight:800;color:#1a1a1a}
+.tb-max{color:#666}
+.tb-timer{font-family:'Courier New',monospace;font-weight:700;color:#02516c;margin-left:6px}
+#game-content{flex:1;overflow-y:auto;padding:10px;background:#fdf6ee}
+.lot-area{background:#fdf6ee;border:4px solid #fdf6ee;border-radius:12px;padding:10px;min-height:200px;position:relative}
+.lot-area--own-field{border-color:#b8c9d3}
+.lot-area__name{font-weight:bold;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px}
+.lot-area__cats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.demand-board{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:10px;margin-top:10px}
+.demand-board__title{font-weight:bold;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px;text-align:center}
+.demand-row{display:flex;align-items:center;justify-content:space-between;padding:8px;background:#fdf6ee;border-bottom:1px solid #b8c9d3}
+.demand-row:last-child{border:none}
+.demand-emoji{font-size:1.3rem}
+.demand-breed{font-weight:700;font-size:.85rem;color:#1a1a1a}
+.demand-price{color:#02516c;font-weight:700}
+.demand-count{color:#666;font-size:.75rem}
+.house-card{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:10px;margin-bottom:8px}
+.house-card__title{font-weight:bold;font-size:.85rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px}
+.house-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.house-slot{background:#fdf6ee;border:2px solid #b8c9d3;border-radius:8px;padding:8px;text-align:center;font-size:1.2rem;min-height:44px;display:flex;align-items:center;justify-content:center}
+.house-slot.empty{opacity:.3}
+.cat{background:transparent}.cat__count{font-weight:700;font-size:.85rem;color:#02516c;text-align:center}.cat__description{text-align:center}.cat__home-icon{text-align:center;margin-top:2px;color:#02516c;font-size:.8rem}
+.cat__image{width:100%;height:100%;object-fit:contain}
+#bottom-nav{display:flex;background:#fdf6ee;border-top:4px solid #b8c9d3;flex-shrink:0}
+.nav-btn{flex:1;padding:10px;background:none;border:none;color:#666;font-size:1.3rem;cursor:pointer;transition:all .15s;border-top:2px solid transparent}
+.nav-btn.active{color:#02516c;border-top-color:#02516c}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-overlay.hidden{display:none}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fdf6ee;padding:10px 20px;border-radius:10px;font-weight:600;font-size:.82rem;z-index:200;white-space:nowrap;max-width:90%;text-align:center}
+.toast.hidden{display:none}
+.btn-group{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.btn-group .text_button{flex:1;min-width:120px}
+#host-sec{display:flex;flex-direction:column;gap:8px}
+</style>
 </head>
 <body>
 <div id="app">
 
 <!-- LOBBY -->
 <div id="scr-lobby" class="screen active">
-<div class="lobby-wrap">
-<div class="logo">🐱</div>
-<h1>Business Cats</h1>
-<p class="lobby-sub">Мультиплеер · До 6 игроков · 3 роли</p>
+<h1>🐱 Business cats</h1>
+<p>Мультиплеер · До 6 игроков</p>
 <div class="lobby-box">
-<button id="btn-create" class="btn btn-primary">🏠 Создать комнату</button>
+<button id="btn-create" class="text_button">🏠 Создать комнату</button>
 <div class="divider"><span>или войти по коду</span></div>
-<div class="join-row">
-<input id="inp-code" type="text" class="inp inp-code" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-<button id="btn-join" class="btn btn-secondary">🚀 Войти</button>
+<div style="display:flex;gap:10px">
+<input id="inp-code" type="text" class="inp" style="flex:1" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+<button id="btn-join" class="text_button" style="flex:0 0 auto;width:auto;padding:12px 20px">🚀</button>
 </div>
 </div>
 <p class="lobby-hint">🎲 Имя выберется случайно</p>
-</div>
 </div>
 
 <!-- WAITING -->
 <div id="scr-wait" class="screen">
 <div class="wait-wrap">
 <h2>⏳ Комната <span id="d-code" class="code-text">------</span></h2>
-<button id="btn-copy" class="btn btn-sm">📋 Копировать код</button>
+<button id="btn-copy" class="text_button" style="padding:8px 14px;font-size:.8rem">📋 Копировать код</button>
 <div id="w-list" class="player-list"></div>
 <div id="host-sec" class="hidden">
 <label class="chk"><input type="checkbox" id="chk-host-play" checked><span>Хост играет</span></label>
-<button id="btn-start" class="btn btn-go" disabled>🏆 Начать</button>
+<button id="btn-start" class="text_button text_button--green" disabled>🏆 Начать игру</button>
 </div>
 <label class="chk"><input type="checkbox" id="chk-ready"><span>Я готов</span></label>
-<button id="btn-leave" class="btn btn-cancel">Выйти</button>
+<button id="btn-leave" class="text_button" style="background:#666">Выйти</button>
 </div>
 </div>
 
@@ -53,13 +127,13 @@
 </div>
 </div>
 <div class="tb-center">
-<span class="tb-money">🪙</span>
+<span class="tb-val">🪙</span>
 <span id="tb-balance" class="tb-val">0</span>
 </div>
 <div class="tb-right">
+<span class="tb-sea">Сезон</span>
 <span id="tb-season" class="tb-sea">1</span>
-<span class="tb-sep">/</span>
-<span class="tb-max">12</span>
+<span class="tb-max">/12</span>
 <span id="tb-timer" class="tb-timer">5:00</span>
 </div>
 </header>
@@ -69,16 +143,26 @@
 <button class="nav-btn" data-tab="cats">🐱</button>
 <button class="nav-btn" data-tab="city">🏙</button>
 <button class="nav-btn" data-tab="trade">🤝</button>
-<button class="nav-btn" data-tab="more">⚙️</button>
+<button class="nav-btn" data-tab="bank">🏦</button>
 </nav>
 </div>
 
 <!-- OVER -->
 <div id="scr-over" class="screen">
-<div class="over-wrap">
 <h1>🏆 Игра окончена</h1>
-<div id="leaderboard"></div>
-<button id="btn-restart" class="btn btn-primary">🔄 Заново</button>
+<div id="leaderboard" style="width:90%;max-width:380px;display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
+<button id="btn-restart" class="text_button" style="max-width:200px">🔄 Заново</button>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay hidden">
+<div class="modal">
+<div class="modal__title" id="modal-title"></div>
+<div class="modal__body" id="modal-body"></div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<button id="modal-cancel" class="text_button" style="background:#666;flex:1">Отмена</button>
+<button id="modal-confirm" class="text_button text_button--green" style="flex:1">ОК</button>
+</div>
 </div>
 </div>
 

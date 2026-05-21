@@ -1,45 +1,28 @@
 class Net{
 constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={}}
 on(e,fn){(this._listeners[e]=this._listeners[e]||[]).push(fn)}
-emit(e){
-var args=Array.prototype.slice.call(arguments,1);
-var fns=this._listeners[e]||[];
-for(var i=0;i<fns.length;i++){
-try{fns[i].apply(null,args)}catch(err){console.error('emit '+e+' error:',err)}
-}
-}
+emit(e){var args=Array.prototype.slice.call(arguments,1);var fns=this._listeners[e]||[];for(var i=0;i<fns.length;i++){try{fns[i].apply(null,args)}catch(err){console.error('emit '+e+' error:',err)}}}
 
 async createRoom(name,role,hostPlay){
-console.log('Net.createRoom:',name,role);
 if(!name)return{err:'Нет имени'};
 try{
 var code=genCode();
-console.log('Generated code:',code);
 this.roomCode=code;
 this.myId='p'+Date.now().toString(36);
-console.log('myId:',this.myId);
 this.roomRef=DB.ref('rooms/'+code);
 var pd={name:name,role:role||ROLE_N,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:true,hostPlay:hostPlay!==false,isHost:true,bankrupt:false};
 var roomData={code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false,createdAt:Date.now()};
-console.log('Writing to Firebase...');
 await this.roomRef.set(roomData);
-console.log('Room data written');
 await this.roomRef.child('players/'+this.myId).set(pd);
-console.log('Player data written');
-}catch(e){
-console.error('createRoom error:',e);
-return{err:'Firebase: '+e.message};
-}
+}catch(e){return{err:'Firebase: '+e.message}}
 this._startListen(code);
 var room={code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false};
 room.players[this.myId]=pd;
 this.emit('update',room,room.players[this.myId]);
-console.log('createRoom success, returning');
 return{ok:true,code:code};
 }
 
 async joinRoom(code,name){
-console.log('Net.joinRoom:',code,name);
 this.roomCode=code;
 this.myId=this.myId||('p'+Date.now().toString(36));
 this.roomRef=DB.ref('rooms/'+code);
@@ -53,10 +36,7 @@ var pd={name:name||'Кот',role:role,balance:START_BAL,cats:{},houses:[],vitrin
 await this.roomRef.child('players/'+this.myId).set(pd);
 room.players[this.myId]=pd;
 }
-}catch(e){
-console.error('joinRoom error:',e);
-return{err:'Ошибка: '+e.message};
-}
+}catch(e){return{err:'Ошибка: '+e.message}}
 this._startListen(code);
 var snap=await this.roomRef.get();
 var room=snap.val();
@@ -222,7 +202,7 @@ var kittens=house.kittens||{};
 for(var i=0;i<count;i++){
 var cat=makeCat(breed,AGE_K);kittens['k'+Date.now().toString(36)+i]=cat;
 }
-house.adults={};house.kittens=kittens;
+house.kittens=kittens;
 await this.roomRef.child('players/'+this.myId+'/houses').set(p.houses);
 return{ok:true,count:count};
 }
