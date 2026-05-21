@@ -132,6 +132,7 @@ this.toast('Покинули комнату');
 }
 
 renderWait(room){
+console.log('renderWait called, room:',room?'yes':'no','players:',room&&room.players?Object.keys(room.players).length:'none');
 var listEl=document.getElementById('wait-players');
 var btnStart=document.getElementById('btn-start');
 var chkReady=document.getElementById('chk-ready');
@@ -140,18 +141,21 @@ var cntEl=document.getElementById('r-cnt');
 var totEl=document.getElementById('r-tot');
 var hostCtrl=document.getElementById('host-controls');
 var hcList=document.getElementById('hc-list');
+console.log('Elements:',listEl?'list ok':'NO LIST',btnStart?'btn ok':'NO BTN');
 if(!room||!room.players){
 if(listEl)listEl.innerHTML='<p>Загрузка...</p>';
 return;
 }
 var players=room.players;
 var keys=Object.keys(players);
+console.log('Player keys:',keys);
 var readyCount=0;
 var total=keys.length;
 var html='';
 var hcHtml='';
 var self=this;
 var myId=this.net.myId;
+console.log('myId:',myId);
 keys.forEach(function(k){
 var p=players[k];
 if(!p)return;
