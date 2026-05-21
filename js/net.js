@@ -1,16 +1,44 @@
 class Net{
-constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={}}
+constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={};this.connected=false;this._reconnectDelay=1000}
 on(e,fn){(this._listeners[e]=this._listeners[e]||[]).push(fn)}
 emit(e){var args=Array.prototype.slice.call(arguments,1);var fns=this._listeners[e]||[];for(var i=0;i<fns.length;i++){try{fns[i].apply(null,args)}catch(err){console.error('emit '+e+' error:',err)}}}
+
+_initConnection(){
+var self=this;
+var connRef=DB.ref('.info/connected');
+connRef.on('value',function(snap){
+if(snap.val()===true){
+self.connected=true;
+console.log('[Net] Connected to Firebase');
+}else{
+self.connected=false;
+console.log('[Net] Disconnected from Firebase');
+self._tryReconnect();
+}
+});
+}
+
+_tryReconnect(){
+var self=this;
+setTimeout(function(){
+if(!self.connected&&self.roomCode){
+console.log('[Net] Attempting reconnect for room '+self.roomCode);
+if(self.roomRef){
+self._startListen(self.roomCode);
+}
+}
+},self._reconnectDelay);
+}
 
 async createRoom(name,role,hostPlay){
 if(!name)return{err:'Нет имени'};
 try{
+this._initConnection();
 var code=genCode();
 this.roomCode=code;
 this.myId='p'+Date.now().toString(36);
 this.roomRef=DB.ref('rooms/'+code);
-var pd={name:name,role:role||ROLE_N,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:true,hostPlay:hostPlay!==false,isHost:true,bankrupt:false};
+var pd={name:name,role:role||ROLE_N,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:true,hostPlay:hostPlay!==false,isHost:true,bankrupt:false,active:true};
 var roomData={code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false,createdAt:Date.now()};
 await this.roomRef.set(roomData);
 await this.roomRef.child('players/'+this.myId).set(pd);
@@ -23,6 +51,7 @@ return{ok:true,code:code};
 }
 
 async joinRoom(code,name){
+this._initConnection();
 this.roomCode=code;
 this.myId=this.myId||('p'+Date.now().toString(36));
 this.roomRef=DB.ref('rooms/'+code);
@@ -32,7 +61,7 @@ if(!snap.exists())return{err:'Комната не найдена'};
 var room=snap.val();
 if(!room.players||!room.players[this.myId]){
 var role=this._pickRole(room);
-var pd={name:name||'Кот',role:role,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:false,hostPlay:false,isHost:false,bankrupt:false};
+var pd={name:name||'Кот',role:role,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:false,hostPlay:false,isHost:false,bankrupt:false,active:true};
 await this.roomRef.child('players/'+this.myId).set(pd);
 room.players[this.myId]=pd;
 }
@@ -116,6 +145,7 @@ u['players/'+this.myId+'/cats']=p.cats;
 u['players/'+this.myId+'/balance']=(p.balance||0)+price;
 u.demand=newDem;
 await this.roomRef.update(u);
+this._checkBankrupt(this.myId,room);
 return{ok:true,price:price};
 }
 
@@ -240,12 +270,21 @@ this.timerLeft=SEASON_SEC;
 this._runTimer();
 }
 
+_checkBankrupt(pid,room){
+var p=room.players?room.players[pid]:null;
+if(!p||p.bankrupt)return;
+if((p.balance||0)<-500){
+this.roomRef.child('players/'+pid+'/bankrupt').set(true);
+this.roomRef.child('players/'+pid+'/active').set(false);
+}
+}
+
 leaveRoom(){
 var self=this;
 if(self.roomRef&&self.myId){
 try{self.roomRef.child('players/'+self.myId).remove()}catch(e){}
 try{self.roomRef.off('value')}catch(e){}
 }
-clearInterval(self.timerInt);self.timerInt=null;self.roomRef=null;self.myId=null;self.roomCode=null;
+clearInterval(self.timerInt);self.timerInt=null;self.roomRef=null;self.myId=null;self.roomCode=null;self.connected=false;
 }
 }
