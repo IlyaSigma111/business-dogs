@@ -1,4 +1,4 @@
-function UI(net){this.net=net;this.state=null;this.me=null;this.tab='home'}
+function UI(net){this.net=net;this.state=null;this.me=null;this.tab='nursery'}
 UI.prototype.init=function(){
 var self=this;
 var el;
@@ -12,12 +12,15 @@ el=document.getElementById('chk-ready');if(el)el.onchange=function(e){self.net.s
 el=document.getElementById('chk-host-play');if(el)el.onchange=function(e){self.net.setHostPlay(e.target.checked)};
 el=document.getElementById('modal-cancel');if(el)el.onclick=function(){self.hideModal()};
 el=document.getElementById('modal-confirm');if(el)el.onclick=function(){self.modalConfirm()};
-var navBtns=document.querySelectorAll('.nav-btn');
+el=document.getElementById('btn-take-loan');if(el)el.onclick=function(){self.actLoan()};
+el=document.getElementById('btn-repay-loan');if(el)el.onclick=function(){self.actRepay()};
+var navBtns=document.querySelectorAll('.nav-tab');
 for(var i=0;i<navBtns.length;i++){
 (function(b){b.onclick=function(){
 for(var j=0;j<navBtns.length;j++)navBtns[j].classList.remove('active');
 b.classList.add('active');
 self.tab=b.dataset.tab;
+self.showActiveTab();
 self.render();
 };})(navBtns[i]);
 }
@@ -72,6 +75,13 @@ UI.prototype.showScreen=function(id){
 var screens=document.querySelectorAll('.screen');
 for(var i=0;i<screens.length;i++){screens[i].classList.remove('active')}
 var el=document.getElementById(id);
+if(el)el.classList.add('active');
+};
+
+UI.prototype.showActiveTab=function(){
+var tabs=document.querySelectorAll('.tab-content');
+for(var i=0;i<tabs.length;i++){tabs[i].classList.remove('active')}
+var el=document.getElementById('tab-'+this.tab);
 if(el)el.classList.add('active');
 };
 
@@ -158,155 +168,131 @@ if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':'Питомник
 if(balEl)balEl.textContent=fmtN(me.balance||0);
 if(seaEl)seaEl.textContent=room.season||1;
 if(emojiEl)emojiEl.textContent=me.role===ROLE_S?'🏪':'🐱';
-var content=document.getElementById('game-content');
-if(!content)return;
-if(this.tab==='home')this.renderHome(content,room,me);
-else if(this.tab==='cats')this.renderCats(content,room,me);
-else if(this.tab==='city')this.renderCity(content,room,me);
-else if(this.tab==='trade')this.renderTrade(content,room,me);
-else if(this.tab==='bank')this.renderBank(content,room,me);
+if(this.tab==='nursery')this.renderNursery(me,room);
+else if(this.tab==='shop')this.renderShop(me,room);
+else if(this.tab==='city')this.renderCity(me,room);
+else if(this.tab==='bank')this.renderBank(me,room);
 };
 
-UI.prototype.renderHome=function(el,room,me){
-var html='';
-// Lot area - own field
-html+='<div class="lot-area lot-area--own-field">';
-html+='<div class="lot-area__name">🐱 '+me.name+'</div>';
-html+='<div class="lot-area__cats">';
+UI.prototype.renderNursery=function(me,room){
+var housesEl=document.getElementById('nur-houses');
+var catsEl=document.getElementById('nur-cats');
+var actionsEl=document.getElementById('nur-actions');
+var houses=me.houses||[];
 var cats=me.cats||{};
 var catKeys=Object.keys(cats);
+
+// Houses
+var hHtml='<div class="demand-board__title">🏠 Дома</div>';
+if(houses.length===0){
+hHtml+='<div style="color:#666;font-size:.85rem;padding:10px;text-align:center">Нет домов. Купите дом!</div>';
+}else{
+for(var i=0;i<houses.length;i++){
+var h=houses[i];
+var aKeys=Object.keys(h.adults||{});
+var kCount=Object.keys(h.kittens||{}).length;
+hHtml+='<div class="house-card"><div class="house-card__title">Дом '+fmtN(i+1)+' ('+aKeys.length+'/'+HOUSE_SLOTS+')';
+if(kCount>0)hHtml+=' · Котята: '+kCount;
+hHtml+='</div><div class="house-card__slots">';
+for(var j=0;j<HOUSE_SLOTS;j++){
+if(j<aKeys.length){
+hHtml+='<div class="house-card__slot">'+h.adults[aKeys[j]].emoji+'</div>';
+}else{
+hHtml+='<div class="house-card__slot empty">·</div>';
+}
+}
+hHtml+='</div>';
+if(kCount>0){
+hHtml+='<button class="text_button text_button--color-green" style="margin-top:6px;font-size:10px;padding:4px 10px;width:auto" onclick="ui.actBreed('+i+')">💘 Разведение</button>';
+}
+hHtml+='</div>';
+}
+}
+if(housesEl)housesEl.innerHTML=hHtml;
+
+// Cats
+var cHtml='';
 if(catKeys.length===0){
-html+='<div style="color:#666;font-size:.85rem;padding:20px;text-align:center">Нет котов</div>';
+cHtml='<div style="color:#fdf6ee;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
 }else{
 for(var i=0;i<catKeys.length;i++){
 var cat=cats[catKeys[i]];
 var ageLabel=cat.age===AGE_K?'Щенок':'Взрослый';
-html+='<div class="cat cat--default">';
-html+='<div style="font-size:2rem;text-align:center">'+cat.emoji+'</div>';
-html+='<div class="cat__count">'+fmtN(cat.price)+'</div>';
-html+='<div class="cat__description"><span style="font-size:.7rem;color:#666">'+ageLabel+' '+cat.temper+'</span></div>';
-html+='<div class="cat__home-icon" onclick="ui.actSellCat(\''+cat.id+'\')" style="cursor:pointer;font-size:.8rem;color:#02516c;text-align:center;margin-top:2px">Продать</div>';
-html+='</div>';
+cHtml+='<div class="cat" onclick="ui.selectCat(\''+cat.id+'\')">';
+cHtml+='<div class="cat__image">'+cat.emoji+'</div>';
+cHtml+='<div class="cat__count">'+fmtN(cat.price)+' 🪙</div>';
+cHtml+='<div class="cat__description">'+ageLabel+' · '+cat.temper+'</div>';
+cHtml+='<div class="cat__actions">';
+cHtml+='<button class="text_button text_button--color-green" style="font-size:8px;padding:3px 6px" onclick="event.stopPropagation();ui.actSellCat(\''+cat.id+'\')">Продать</button>';
+if(houses.length>0&&me.role===ROLE_N){
+cHtml+='<button class="text_button text_button--color-purple" style="font-size:8px;padding:3px 6px" onclick="event.stopPropagation();ui.actPutHouse(\''+cat.id+'\')">В дом</button>';
+}
+cHtml+='<button class="text_button text_button--color-blue" style="font-size:8px;padding:3px 6px" onclick="event.stopPropagation();ui.actVitrine(\''+cat.id+'\')">Витрина</button>';
+cHtml+='</div></div>';
 }
 }
-html+='</div></div>';
-
-// Demand board
-html+='<div class="demand-board">';
-html+='<div class="demand-board__title">🏙 Городской спрос</div>';
-var dem=room.demand||[];
-for(var i=0;i<dem.length;i++){
-var d=dem[i];
-var b=BREED_MAP[d.breed];
-html+='<div class="demand-row">';
-html+='<span class="demand-emoji">'+(b?b.emoji:'🐱')+'</span>';
-html+='<span class="demand-breed">'+(b?b.name:d.breed)+'</span>';
-html+='<span class="demand-price">'+fmtN(d.price)+' 🪙</span>';
-html+='<span class="demand-count">x'+d.count+'</span>';
-html+='</div>';
-}
-html+='</div>';
+if(catsEl)catsEl.innerHTML=cHtml;
 
 // Actions
-html+='<div class="btn-group">';
-if(me.role===ROLE_N){
-html+='<button class="text_button text_button--green" onclick="ui.actBuyCat(\'kitten\')">🐱 Щенок (-60%)</button>';
-html+='<button class="text_button text_button--green" onclick="ui.actBuyCat(\'adult\')">😺 Взрослый</button>';
-}else{
-html+='<button class="text_button text_button--green" onclick="ui.actBuyCat(\'kitten\')">🐱 Купить кота</button>';
-}
-html+='</div>';
-html+='<div class="btn-group">';
-html+='<button class="text_button text_button--purple" onclick="ui.actAddHouse()">🏠 Дом ('+HOUSE_PRICE+'🪙)</button>';
-html+='<button class="text_button" onclick="ui.tabBreed()">💘 Разведение</button>';
-html+='</div>';
-
-// Houses
-var houses=me.houses||[];
-if(houses.length>0){
-html+='<div class="demand-board"><div class="demand-board__title">🏠 Дома</div>';
-for(var i=0;i<houses.length;i++){
-var h=houses[i];
-var aCount=Object.keys(h.adults||{}).length;
-var kCount=Object.keys(h.kittens||{}).length;
-html+='<div class="house-card"><div class="house-card__title">Дом '+fmtN(i+1)+' ('+aCount+'/'+HOUSE_SLOTS+')</div>';
-html+='<div class="house-slots">';
-var adultKeys=Object.keys(h.adults||{});
-for(var j=0;j<HOUSE_SLOTS;j++){
-if(j<adultKeys.length){
-var ac=h.adults[adultKeys[j]];
-html+='<div class="house-slot">'+ac.emoji+'</div>';
-}else{
-html+='<div class="house-slot empty">·</div>';
-}
-}
-html+='</div>';
-if(kCount>0){
-html+='<div style="margin-top:6px;font-size:.75rem;color:#666">Котята: '+kCount+'</div>';
-}
-html+='</div>';
-}
-html+='</div>';
-}
-
-// Vitrine
-var vit=me.vitrine||{};
-var vitKeys=Object.keys(vit);
-if(vitKeys.length>0){
-html+='<div class="demand-board"><div class="demand-board__title">📦 Витрина</div>';
-for(var i=0;i<vitKeys.length;i++){
-var vc=vit[vitKeys[i]];
-html+='<div class="demand-row"><span class="demand-emoji">'+vc.emoji+'</span><span class="demand-breed">'+vc.breed+'</span><span class="demand-price">'+fmtN(vc.price)+'🪙</span>';
-html+='<button class="text_button" style="padding:4px 10px;font-size:.7rem;width:auto;background:#666" onclick="ui.actRemoveVitrine(\''+vc.id+'\')">Снять</button></div>';
-}
-html+='</div>';
-}
-
-el.innerHTML=html;
+var aHtml='';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'kitten\')" title="Купить щенка">🐱</button>';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить взрослого">😺</button>';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actAddHouse()" title="Купить дом">🏠</button>';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.tabBreed()" title="Разведение">💘</button>';
+if(actionsEl)actionsEl.innerHTML=aHtml;
 };
 
-UI.prototype.renderCats=function(el,room,me){
-var html='<div class="lot-area lot-area--own-field"><div class="lot-area__name">🐱 Мои коты</div><div class="lot-area__cats">';
+UI.prototype.renderShop=function(me,room){
+var catsEl=document.getElementById('shp-cats');
+var actionsEl=document.getElementById('shp-actions');
 var cats=me.cats||{};
-var keys=Object.keys(cats);
-if(keys.length===0){html+='<div style="color:#666;font-size:.85rem;padding:20px">Нет котов</div>'}
-else{
-for(var i=0;i<keys.length;i++){
-var cat=cats[keys[i]];
+var catKeys=Object.keys(cats);
+
+var cHtml='';
+if(catKeys.length===0){
+cHtml='<div style="color:#666;font-size:.85rem;padding:20px;text-align:center;width:100%">Нет котов. Купите кота!</div>';
+}else{
+for(var i=0;i<catKeys.length;i++){
+var cat=cats[catKeys[i]];
 var ageLabel=cat.age===AGE_K?'Щенок':'Взрослый';
-html+='<div class="cat cat--default">';
-html+='<div style="font-size:2rem;text-align:center">'+cat.emoji+'</div>';
-html+='<div class="cat__count">'+fmtN(cat.price)+'</div>';
-html+='<div class="cat__description"><span style="font-size:.7rem;color:#666">'+ageLabel+' '+cat.temper+'</span></div>';
-html+='<div style="display:flex;gap:4px;margin-top:4px">';
-html+='<button class="text_button" style="padding:4px 8px;font-size:.7rem;width:auto;background:#d63031" onclick="ui.actSellCat(\''+cat.id+'\')">Продать</button>';
-if(me.role===ROLE_N){
-html+='<button class="text_button" style="padding:4px 8px;font-size:.7rem;width:auto;background:#b3c79b" onclick="ui.actPutHouse(\''+cat.id+'\')">В дом</button>';
-}
-html+='</div></div>';
+cHtml+='<div class="cat">';
+cHtml+='<div class="cat__image">'+cat.emoji+'</div>';
+cHtml+='<div class="cat__count">'+fmtN(cat.price)+' 🪙</div>';
+cHtml+='<div class="cat__description">'+ageLabel+' · '+cat.temper+'</div>';
+cHtml+='<div class="cat__actions">';
+cHtml+='<button class="text_button text_button--color-green" style="font-size:8px;padding:3px 6px" onclick="ui.actSellCat(\''+cat.id+'\')">Продать</button>';
+cHtml+='<button class="text_button text_button--color-blue" style="font-size:8px;padding:3px 6px" onclick="ui.actVitrine(\''+cat.id+'\')">Витрина</button>';
+cHtml+='</div></div>';
 }
 }
-html+='</div></div>';
-el.innerHTML=html;
+if(catsEl)catsEl.innerHTML=cHtml;
+
+var aHtml='';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.actBuyCat(\'adult\')" title="Купить кота">🐱</button>';
+aHtml+='<button class="own-nurseries__actions-item" onclick="ui.tabCity()" title="Город">🏙</button>';
+if(actionsEl)actionsEl.innerHTML=aHtml;
 };
 
-UI.prototype.renderCity=function(el,room,me){
-var html='<div class="demand-board"><div class="demand-board__title">🏙 Городской спрос</div>';
+UI.prototype.renderCity=function(me,room){
+var demEl=document.getElementById('city-demand');
+var tradeEl=document.getElementById('city-trade');
 var dem=room.demand||[];
+var dHtml='<div class="demand-board__title">🏙 Городской спрос</div>';
 for(var i=0;i<dem.length;i++){
 var d=dem[i];
 var b=BREED_MAP[d.breed];
-html+='<div class="demand-row">';
-html+='<span class="demand-emoji">'+(b?b.emoji:'🐱')+'</span>';
-html+='<span class="demand-breed">'+(b?b.name:d.breed)+'</span>';
-html+='<span class="demand-price">'+fmtN(d.price)+' 🪙</span>';
-html+='<span class="demand-count">x'+d.count+'</span>';
-html+='</div>';
+dHtml+='<div class="demand-row">';
+dHtml+='<span class="demand-emoji">'+(b?b.emoji:'🐱')+'</span>';
+dHtml+='<span class="demand-breed">'+(b?b.name:d.breed)+'</span>';
+dHtml+='<span class="demand-price">'+fmtN(d.price)+' 🪙</span>';
+dHtml+='<span class="demand-count">x'+d.count+'</span>';
+dHtml+='</div>';
 }
-html+='</div>';
+if(demEl)demEl.innerHTML=dHtml;
 
 var vitAll=[];
 var players=room.players||{};
+var self=this;
 Object.keys(players).forEach(function(k){
 if(k!==ui.net.myId){
 var p=players[k];
@@ -317,48 +303,32 @@ vitAll.push({id:vc.id,sellerId:k,sellerName:p.name,emoji:vc.emoji,name:vc.breed,
 });
 }
 });
-if(vitAll.length>0){
-html+='<div class="demand-board"><div class="demand-board__title">🛒 Магазин игроков</div>';
+var tHtml='<div class="demand-board__title">🛒 Магазин игроков</div>';
+if(vitAll.length===0){
+tHtml+='<div style="color:#666;font-size:.85rem;padding:10px;text-align:center">Пусто</div>';
+}else{
 for(var i=0;i<vitAll.length;i++){
 var v=vitAll[i];
-html+='<div class="demand-row"><span class="demand-emoji">'+v.emoji+'</span>';
-html+='<span class="demand-breed">'+v.name+'</span>';
-html+='<span class="demand-price">'+fmtN(v.price)+' 🪙</span>';
-html+='<button class="text_button text_button--green" style="padding:4px 10px;font-size:.7rem;width:auto" onclick="ui.actBuyVitrine(\''+v.sellerId+'\',\''+v.id+'\')">Купить</button></div>';
+tHtml+='<div class="demand-row"><span class="demand-emoji">'+v.emoji+'</span>';
+tHtml+='<span class="demand-breed">'+v.name+' <span style="color:#666;font-size:.7rem">('+v.sellerName+')</span></span>';
+tHtml+='<span class="demand-price">'+fmtN(v.price)+' 🪙</span>';
+tHtml+='<button class="text_button text_button--color-green" style="padding:4px 10px;font-size:.7rem;width:auto" onclick="ui.actBuyVitrine(\''+v.sellerId+'\',\''+v.id+'\')">Купить</button></div>';
 }
-html+='</div>';
 }
-el.innerHTML=html;
+if(tradeEl)tradeEl.innerHTML=tHtml;
 };
 
-UI.prototype.renderTrade=function(el,room,me){
-var html='<div class="demand-board"><div class="demand-board__title">🤝 Торговля</div>';
-html+='<p style="color:#666;font-size:.85rem;margin-bottom:10px">Купите кота у другого игрока</p>';
-html+='<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
-html+='<input id="trade-seller" class="inp" style="text-align:left;letter-spacing:0;flex:1;min-width:120px;font-size:.9rem" placeholder="ID продавца">';
-html+='<input id="trade-cat" class="inp" style="text-align:left;letter-spacing:0;flex:1;min-width:120px;font-size:.9rem" placeholder="ID кота">';
-html+='</div>';
-html+='<button class="text_button text_button--green" onclick="ui.actBuyDirect()">Купить</button>';
-html+='</div>';
-el.innerHTML=html;
-};
-
-UI.prototype.renderBank=function(el,room,me){
-var html='<div class="demand-board"><div class="demand-board__title">🏦 Банк</div>';
+UI.prototype.renderBank=function(me,room){
+var infoEl=document.getElementById('bank-info');
+if(infoEl){
+var txt='🏦 <span class="ltd-bank_guarantee__text-bold">Банк</span>';
 if(me.loan>0){
-html+='<div class="demand-row"><span class="demand-emoji">💳</span><span class="demand-breed">Текущий кредит</span><span class="demand-price">'+fmtN(me.loan)+' 🪙</span></div>';
+txt+='<br>Текущий кредит: <span class="ltd-bank_guarantee__text-bold">'+fmtN(me.loan)+' 🪙</span>';
+}else{
+txt+='<br>У вас нет кредита';
 }
-html+='<div style="margin-top:10px">';
-html+='<label style="font-size:.85rem;color:#666">Сумма:</label>';
-html+='<input id="loan-amount" class="inp" style="text-align:center;letter-spacing:0;font-size:1rem" value="200" inputmode="numeric">';
-html+='</div>';
-html+='<div class="btn-group" style="margin-top:10px">';
-html+='<button class="text_button text_button--green" onclick="ui.actLoan()">💳 Взять кредит</button>';
-html+='<button class="text_button" onclick="ui.actRepay()">💰 Вернуть</button>';
-html+='</div>';
-html+='<p style="color:#666;font-size:.75rem;margin-top:10px">Лимит кредита: 1000 монет</p>';
-html+='</div>';
-el.innerHTML=html;
+infoEl.innerHTML=txt;
+}
 };
 
 UI.prototype.kick=function(pid){
@@ -374,6 +344,10 @@ var next=cur===ROLE_N?ROLE_S:ROLE_N;
 this.net.changeRole(pid,next);
 };
 
+UI.prototype.selectCat=function(catId){
+this._selectedCat=catId;
+};
+
 UI.prototype.actBuyCat=function(age){
 var breeds=Object.keys(BREED_MAP);
 var breed=prompt('Порода ('+breeds.join(', ')+')?','british');
@@ -387,7 +361,7 @@ var self=this;
 this.net.sellCat(catId).then(function(r){if(r&&r.ok)self.toast('Продано за '+fmtN(r.price)+'🪙');else if(r&&r.err)self.toast(r.err,2)});
 };
 
-UI.prototype.actPutVitrine=function(catId){
+UI.prototype.actVitrine=function(catId){
 var price=prompt('Цена?');
 price=parseInt(price)||0;
 if(price<=0)return this.toast('Укажи цену',1);
@@ -401,14 +375,6 @@ this.net.removeVitrine(catId).then(function(r){if(r&&r.ok)self.toast('Снято
 };
 
 UI.prototype.actBuyVitrine=function(sellerId,catId){
-var self=this;
-this.net.buyVitrine(sellerId,catId).then(function(r){if(r&&r.ok)self.toast('Куплено!');else if(r&&r.err)self.toast(r.err,2)});
-};
-
-UI.prototype.actBuyDirect=function(){
-var sellerId=document.getElementById('trade-seller').value.trim();
-var catId=document.getElementById('trade-cat').value.trim();
-if(!sellerId||!catId)return this.toast('Заполни оба поля',1);
 var self=this;
 this.net.buyVitrine(sellerId,catId).then(function(r){if(r&&r.ok)self.toast('Куплено!');else if(r&&r.err)self.toast(r.err,2)});
 };
@@ -427,13 +393,12 @@ var self=this;
 this.net.putInHouse(catId,idx).then(function(r){if(r&&r.ok)self.toast('Кот в доме');else if(r&&r.err)self.toast(r.err,2)});
 };
 
+UI.prototype.actBreed=function(houseIdx){
+var self=this;
+this.net.breedCats(houseIdx).then(function(r){if(r&&r.ok)self.toast('Родилось '+r.count+' котят! 🎉');else if(r&&r.err)self.toast(r.err,2)});
+};
+
 UI.prototype.tabBreed=function(){
-this.tab='cats';
-var navBtns=document.querySelectorAll('.nav-btn');
-for(var i=0;i<navBtns.length;i++){
-if(navBtns[i].dataset.tab==='cats'){navBtns[i].classList.add('active')}
-else{navBtns[i].classList.remove('active')}
-}
 var houses=this.me?this.me.houses||[]:[];
 if(houses.length===0)return this.toast('Нет домов',1);
 var idx=prompt('Номер дома для разведения (0-'+(houses.length-1)+')?','0');
@@ -458,13 +423,14 @@ var self=this;
 this.net.repayLoan(amount).then(function(r){if(r&&r.ok)self.toast('Кредит возвращён');else if(r&&r.err)self.toast(r.err,2)});
 };
 
-UI.prototype.tabTrade=function(){
-this.tab='trade';
-var navBtns=document.querySelectorAll('.nav-btn');
+UI.prototype.tabCity=function(){
+this.tab='city';
+var navBtns=document.querySelectorAll('.nav-tab');
 for(var i=0;i<navBtns.length;i++){
-if(navBtns[i].dataset.tab==='trade'){navBtns[i].classList.add('active')}
+if(navBtns[i].dataset.tab==='city'){navBtns[i].classList.add('active')}
 else{navBtns[i].classList.remove('active')}
 }
+this.showActiveTab();
 this.render();
 };
 

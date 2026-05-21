@@ -10,19 +10,14 @@
 <style>
 html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:#fdf6ee}
 .screen{display:none;height:100%;height:calc(var(--vh,1vh)*100)}.screen.active{display:flex}
+
+/* LOBBY */
 #scr-lobby,#scr-over{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);align-items:center;justify-content:center;flex-direction:column}
 #scr-lobby h1{font-size:2rem;color:#1a1a1a;font-weight:bold;text-transform:uppercase;margin-bottom:10px}
 #scr-lobby p{color:#666;font-size:.9rem;margin-bottom:20px}
 .lobby-box{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:20px;width:90%;max-width:380px;display:flex;flex-direction:column;gap:14px}
-.text_button{background:#02516c;color:#fdf6ee;border:none;border-radius:12px;padding:12px 20px;font-size:1rem;font-weight:bold;cursor:pointer;text-transform:uppercase;width:100%;transition:all .15s}
-.text_button:active{transform:scale(.97)}.text_button:disabled{opacity:.4}
-.text_button--green{background:#b3c79b;color:#1a1a1a}
-.text_button--purple{background:#a855f7;color:#fff}
-.inp{padding:12px;border:2px solid #b8c9d3;border-radius:12px;font-size:1.1rem;background:#fdf6ee;text-align:center;font-family:'Courier New',monospace;letter-spacing:6px;outline:none;color:#1a1a1a}
-.inp:focus{border-color:#02516c}
-.divider{display:flex;align-items:center;gap:10px;color:#999;font-size:.75rem}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:#b8c9d3}
-.lobby-hint{font-size:.75rem;color:#999;text-align:center}
+
+/* WAITING */
 #scr-wait{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);flex-direction:column}
 .wait-wrap{padding:20px;width:100%;max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .wait-wrap h2{font-size:1.1rem;color:#1a1a1a;text-align:center;text-transform:uppercase}
@@ -36,51 +31,223 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 .p-ready{width:10px;height:10px;border-radius:50%}.p-ready.y{background:#b3c79b}.p-ready.n{background:#d63031}
 .p-kick-btn,.p-role-btn{background:none;border:none;font-size:1rem;cursor:pointer;padding:4px;opacity:.6}
 .p-kick-btn:hover,.p-role-btn:hover{opacity:1}
-.hidden{display:none!important}
-.chk{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#1a1a1a}
-.chk input{width:18px;height:18px;accent-color:#02516c}
-#topbar{background:#fdf6ee;border-bottom:4px solid #b8c9d3;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
-.tb-left{display:flex;align-items:center;gap:8px}
-.tb-emoji{font-size:1.5rem}
-.tb-info{display:flex;flex-direction:column}
-.tb-name{font-weight:700;font-size:.8rem;color:#1a1a1a}
-.tb-role{font-size:.65rem;color:#666;text-transform:uppercase}
-.tb-center{display:flex;align-items:center;gap:4px}
-.tb-val{font-family:'Courier New',monospace;font-size:1.05rem;font-weight:800;color:#02516c}
-.tb-right{display:flex;align-items:center;gap:3px;font-size:.8rem}
-.tb-sea{font-weight:800;color:#1a1a1a}
-.tb-max{color:#666}
-.tb-timer{font-family:'Courier New',monospace;font-weight:700;color:#02516c;margin-left:6px}
-#game-content{flex:1;overflow-y:auto;padding:10px;background:#fdf6ee}
-.lot-area{background:#fdf6ee;border:4px solid #fdf6ee;border-radius:12px;padding:10px;min-height:200px;position:relative}
-.lot-area--own-field{border-color:#b8c9d3}
-.lot-area__name{font-weight:bold;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px}
-.lot-area__cats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.demand-board{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:10px;margin-top:10px}
-.demand-board__title{font-weight:bold;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px;text-align:center}
+
+/* HEADER */
+.header_container{height:80px;position:relative;display:flex;justify-content:space-between;padding:0 16px;align-items:center;background:#fdf6ee;box-shadow:0 2px 2px rgba(0,0,0,.1);z-index:10;flex-shrink:0}
+@media(max-width:1200px){.header_container{height:55px}}
+@media(max-height:360px){.header_container{height:40px}}
+.header_container .left_side_container{display:flex;align-items:center;gap:10px}
+.header_container .avatar_container{display:flex;align-items:center;gap:6px}
+.header_container .avatar-icon{font-size:1.5rem}
+.header_container .player-info{display:flex;flex-direction:column}
+.header_container .player-name{font-weight:700;font-size:.85rem;color:#1a1a1a}
+.header_container .player-role{font-size:.7rem;color:#666;text-transform:uppercase}
+.header_container .balance_container{display:flex;align-items:center;gap:4px}
+.header_container .balance-coin{font-size:1.2rem}
+.header_container .balance-value{font-family:'Courier New',monospace;font-size:1.1rem;font-weight:800;color:#02516c}
+.header_container .right_side_container{display:flex;align-items:center;gap:8px;font-size:.85rem}
+.header_container .season-label{font-weight:700;color:#1a1a1a}
+.header_container .season-value{font-weight:800;color:#1a1a1a}
+.header_container .season-max{color:#666}
+.header_container .timer-value{font-family:'Courier New',monospace;font-weight:700;color:#02516c}
+.header_container .btns_container{display:flex;align-items:center;gap:8px}
+
+/* OWN NURSERIES */
+.own-nurseries{flex:1;position:relative;overflow:hidden;background:#b3c79b;display:flex;align-items:center;justify-content:center}
+.own-nurseries__layout{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:10px;width:90%;max-width:900px;height:85%}
+.own-nurseries__houses-section{grid-column:1/3;grid-row:1/3;background:#fdf6ee;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.own-nurseries__cats-section{grid-column:1/3;grid-row:3/5;background:#fdf6ee;border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;overflow-y:auto}
+.own-nurseries__actions{grid-column:3;grid-row:1/5;display:flex;flex-direction:column;gap:8px;background:#fdf6ee;border-radius:12px;padding:10px;justify-content:center}
+@media(max-width:1200px){
+.own-nurseries__layout{grid-template-columns:1fr;grid-template-rows:auto;gap:8px;width:95%;height:auto}
+.own-nurseries__houses-section{grid-column:1;grid-row:auto;max-height:40vh}
+.own-nurseries__cats-section{grid-column:1;grid-row:auto;max-height:40vh}
+.own-nurseries__actions{grid-column:1;grid-row:auto;flex-direction:row;flex-wrap:wrap;max-height:none}
+}
+
+/* HOUSE CARD */
+.house-card{background:#b3c79b;border-radius:8px;padding:8px;position:relative}
+.house-card__title{font-weight:700;font-size:.8rem;text-transform:uppercase;color:#fdf6ee;margin-bottom:6px}
+.house-card__slots{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.house-card__slot{background:#fdf6ee;border-radius:4px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid #eedbc7}
+.house-card__slot.empty{opacity:.3}
+.house-card__kittens{font-size:.7rem;color:#fdf6ee;margin-top:4px}
+
+/* CAT COMPONENT (original .cat) */
+.cat{height:16vh;height:calc(var(--vh,1vh)*16);width:8.7vw;margin:0 8px;display:flex;flex-direction:column;justify-content:space-between;padding:8px;position:relative;background:#fdf6ee;border-radius:12px;cursor:pointer}
+.cat:before{content:'';display:inline-block;position:absolute;top:0;left:0;right:0;bottom:0;border-radius:12px;transition:all .3s}
+@media(hover:hover) and (pointer:fine){.cat:hover:before{background:rgba(255,255,255,.5)}}
+@media(max-width:1200px){
+.cat{width:calc(9vw-(env(safe-area-inset-left)+env(safe-area-inset-right))/8);height:10vh;height:calc(var(--vh,1vh)*10);flex-direction:row;box-shadow:0 2px 4px 4px rgba(0,0,0,.05);border-radius:4px;align-items:center;padding:2px 5px 2px 0;margin:0 6px}
+}
+@media(max-height:450px){.cat{height:8vh;height:calc(var(--vh,1vh)*8)}}
+@media(max-height:360px){.cat{height:28px}}
+@media(max-width:700px){.cat{margin:0 2px}}
+.cat__image{display:flex;align-items:center;justify-content:center;font-size:2rem;flex:1}
+.cat__count{font-weight:700;font-size:.85rem;color:#02516c;text-align:center}
+.cat__description{text-align:center;font-size:.7rem;color:#666}
+.cat__actions{display:flex;gap:4px;margin-top:4px;justify-content:center}
+@media(max-width:1200px){.cat__actions{flex-direction:column;gap:2px}}
+
+/* SHOP PAGE */
+.shop-page{flex:1;position:relative;overflow:hidden;background:#fdf6ee;display:flex;align-items:center;justify-content:center}
+.shop-page__wrapper{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:12px;width:80%;max-width:700px;height:80%}
+@media(max-width:1200px){.shop-page__wrapper{grid-template-columns:repeat(2,1fr);width:90%;height:auto;gap:8px}}
+
+/* LTD PAGE (city demand + trading) */
+.ltd{flex:1;overflow:auto;padding:18px 10px 18px 16px;align-items:center;background:#fdf6ee}
+@media(max-width:1200px){.ltd{height:calc(100%-55px);padding:8px calc(env(safe-area-inset-right)+8px) 8px calc(env(safe-area-inset-left)+8px)}}
+.ltd__wrap{width:100%;display:flex;flex-direction:column;padding-right:100px}
+@media(max-width:1200px){.ltd__wrap{padding-right:0}}
+.ltd__head{width:100%;background:#b8c9d3;margin-bottom:10px;display:flex;flex-direction:column;align-items:center;border:4px solid #fdf6ee;border-radius:12px;padding:11px}
+@media(max-width:1200px){.ltd__head{border-width:2px}}
+.ltd__head-info{display:flex;width:100%;justify-content:space-between;background:inherit}
+@media(max-width:1200px){.ltd__head-info{flex-direction:column}}
+.ltd__head-info-text{color:#fdf6ee;font-weight:bold;text-align:center;text-transform:uppercase;font-size:14px}
+.ltd__head-info-wrapper{display:flex;align-items:center;flex-direction:column;justify-content:center;margin-left:auto;margin-right:auto;background:inherit;border-radius:16px;padding:13px 0}
+@media(max-width:1200px){.ltd__head-info-wrapper{margin-top:16px;flex-direction:row;padding:0}}
+.ltd__head-info-text-name{color:#191919;font-size:18px;height:40px;display:flex;align-items:center;margin-bottom:15px}
+.ltd__layout{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(6,1fr);grid-gap:10px;height:calc(100%-120px)}
+@media(max-width:1200px){.ltd__layout{grid-template-columns:1fr;grid-template-rows:auto;gap:8px}}
+.ltd__layout>div{border-radius:12px}
+.ltd__content{grid-column:1/3;grid-row:1/5;background:#fdf6ee;display:flex;flex-direction:column;height:calc(100%-20px);margin-top:20px;border-radius:0 0 16px 16px!important}
+@media(max-width:1200px){.ltd__content{grid-column:1;grid-row:auto;border-radius:0 0 8px 8px!important}}
+.ltd__content-tabs{height:29px;margin-bottom:20px;display:flex;margin-top:-20px}
+@media(max-width:1200px){.ltd__content-tabs{height:20px;margin-top:-19px;margin-bottom:6px}}
+.ltd__content-tab{cursor:pointer;text-transform:uppercase;font-size:16px;font-weight:bold;background:#fbeddd;border-radius:16px 16px 0 0;text-align:center;width:100%;height:29px;display:flex;align-items:center;justify-content:center;color:#c6a788;padding-top:3px}
+@media(max-width:1200px){.ltd__content-tab{border-radius:8px 8px 0 0}}
+.ltd__content-tab--active{cursor:inherit;color:#1a1a1a;background:#fdf6ee}
+.ltd__bank{background:#b1b2ca;grid-column:1/3;grid-row:5/7}
+@media(max-width:1200px){.ltd__bank{grid-column:1;grid-row:auto}}
+.ltd__payment-fine{background:#b1b2ca;grid-column:3;grid-row:1/3}
+.ltd__delivery-fine{background:#b1b2ca;grid-column:3;grid-row:3/5}
+.ltd__quality-fine{background:#b1b2ca;grid-column:3;grid-row:5/7}
+@media(max-width:1200px){.ltd__payment-fine,.ltd__delivery-fine,.ltd__quality-fine{grid-column:1;grid-row:auto}}
+
+/* DEMAND ROW */
 .demand-row{display:flex;align-items:center;justify-content:space-between;padding:8px;background:#fdf6ee;border-bottom:1px solid #b8c9d3}
 .demand-row:last-child{border:none}
 .demand-emoji{font-size:1.3rem}
 .demand-breed{font-weight:700;font-size:.85rem;color:#1a1a1a}
 .demand-price{color:#02516c;font-weight:700}
 .demand-count{color:#666;font-size:.75rem}
-.house-card{background:#fdf6ee;border:4px solid #b8c9d3;border-radius:12px;padding:10px;margin-bottom:8px}
-.house-card__title{font-weight:bold;font-size:.85rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px}
-.house-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.house-slot{background:#fdf6ee;border:2px solid #b8c9d3;border-radius:8px;padding:8px;text-align:center;font-size:1.2rem;min-height:44px;display:flex;align-items:center;justify-content:center}
-.house-slot.empty{opacity:.3}
-.cat{background:transparent}.cat__count{font-weight:700;font-size:.85rem;color:#02516c;text-align:center}.cat__description{text-align:center}.cat__home-icon{text-align:center;margin-top:2px;color:#02516c;font-size:.8rem}
-.cat__image{width:100%;height:100%;object-fit:contain}
-#bottom-nav{display:flex;background:#fdf6ee;border-top:4px solid #b8c9d3;flex-shrink:0}
-.nav-btn{flex:1;padding:10px;background:none;border:none;color:#666;font-size:1.3rem;cursor:pointer;transition:all .15s;border-top:2px solid transparent}
-.nav-btn.active{color:#02516c;border-top-color:#02516c}
+
+/* CAT STORAGE */
+.ltd__content-storage{margin:0 15px 10px;display:flex;background:#b3c79b;padding:10px;border-radius:16px}
+@media(max-width:1200px){.ltd__content-storage{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px;flex-wrap:wrap}}
+.ltd__content-storage-cats{width:75%;display:flex;padding-right:20px;flex-wrap:wrap;gap:6px}
+@media(max-width:1200px){.ltd__content-storage-cats{width:100%}}
+.ltd__content-storage-timer{width:25%;display:flex;flex-direction:column;justify-content:space-around}
+@media(max-width:1200px){.ltd__content-storage-timer{width:100%;flex-direction:row;gap:10px}}
+
+/* FORM CAT */
+.ltd-form-cat{width:10%;margin-left:2%;display:flex;flex-direction:column}
+@media(max-width:1200px){.ltd-form-cat{width:calc(33%-4px);margin-left:2%}}
+.ltd-form-cat__img-count{text-align:center;height:100%;margin-bottom:10px;background:#fdf6ee;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px}
+.ltd-form-cat__img-count-image{width:100%;height:50px;background-size:contain;background-position:center;background-repeat:no-repeat;margin-top:5px;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.ltd-form-cat__price{min-height:40px;background:#fdf6ee;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#02516c;font-size:.85rem}
+
+/* BANK */
+.ltd-bank-guarantee__wrapper{display:flex;flex-direction:column;justify-content:space-around;height:100%;padding:20px}
+@media(max-width:1200px){.ltd-bank-guarantee__wrapper{padding:12px;gap:10px}}
+.ltd-bank_guarantee__text{font-style:normal;font-weight:normal;font-size:14px;line-height:normal;text-transform:uppercase;color:#fdf6ee;padding-bottom:15px}
+@media(max-width:1200px){.ltd-bank_guarantee__text{font-size:10px}}
+.ltd-bank_guarantee__text-bold{font-weight:bold}
+.ltd-bank_guarantee__block-main{display:flex;justify-content:flex-start;align-items:center;height:100%;flex-wrap:wrap;gap:10px}
+
+/* FINE */
+.ltd-fine{display:flex;flex-direction:column;justify-content:space-around;height:100%;padding:20px}
+@media(max-width:1200px){.ltd-fine{padding:12px;gap:12px}}
+.ltd-fine__value{display:flex;justify-content:space-between;align-items:center;min-height:28px}
+.ltd-fine__title{color:#fdf6ee;font-weight:700;font-size:12px;text-transform:uppercase;text-align:center}
+
+/* NUMBER INPUT */
+.number-input-wrapper{position:relative;width:108px;background:#fdf6ee;border:1px solid #eedbc7;border-radius:6px;height:28px;display:flex;align-items:center}
+.number-input-wrapper--readonly{background:#fbeddd}
+.number-input-wrapper__delimiter{width:1px;height:80%;background:#eedbc7;margin:3px 0}
+.number-input{width:100%;min-height:40px;background:none;font-size:20px;outline:none;border:none;text-align:center;font-weight:bold;color:#1a1a1a;appearance:none;-webkit-appearance:none;-moz-appearance:none}
+.number-input::placeholder{color:#eedbc7}
+@media(min-width:1201px){.number-input-wrapper{height:40px}}
+
+/* TEXT BUTTON */
+.text_button{padding:9px 22px 9px;box-shadow:inset 0px 3px 0px rgba(255,255,255,.3),inset -3px -3px 0px rgba(0,0,0,.2);border-radius:8px;cursor:pointer;font-style:normal;font-weight:bold;font-size:20px;line-height:27px;text-transform:uppercase;color:#fffbe5;margin:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;border:none}
+@media(max-width:1200px){.text_button{padding:4px 8px;border-radius:4px;align-self:center;font-size:10px;line-height:20px}}
+.text_button--color-purple{background:#c6a788}
+.text_button--color-purple:hover{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(255,255,255,.4)),#c6a788}
+.text_button--color-purple:active{background:linear-gradient(0deg,rgba(0,0,0,.2),rgba(0,0,0,.2)),#c6a788}
+.text_button--color-blue{background:#02516c}
+.text_button--color-blue:hover{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(255,255,255,.4)),#02516c}
+.text_button--color-blue:active{background:linear-gradient(0deg,rgba(0,0,0,.2),rgba(0,0,0,.2)),#02516c}
+.text_button--color-green{background:#5aa122}
+.text_button--color-green:hover{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(255,255,255,.4)),#5aa122}
+.text_button--color-green:active{background:linear-gradient(0deg,rgba(0,0,0,.2),rgba(0,0,0,.2)),#5aa122}
+.text_button--color-red{background:#d63031}
+.text_button--color-red:hover{background:linear-gradient(0deg,rgba(255,255,255,.4),rgba(255,255,255,.4)),#d63031}
+
+/* ACTIONS */
+.own-nurseries__actions-item{background:#5aa122;border-radius:100px;width:64px;height:64px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;color:#fdf6ee;text-align:center;transition:all .15s;border:none;padding:0}
+.own-nurseries__actions-item:hover{opacity:.85}
+.own-nurseries__actions-item--disabled{opacity:.4;pointer-events:none}
+@media(max-width:1200px){.own-nurseries__actions-item{width:48px;height:48px;font-size:1.2rem}}
+
+/* CONTENT TABS */
+.tab-content{display:none}.tab-content.active{display:flex;flex-direction:column;height:100%}
+
+/* MODAL */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal-overlay.hidden{display:none}
+.modal{background:#fdf6ee;border-radius:16px;padding:20px;max-width:400px;width:90%;text-align:center}
+.modal__title{font-weight:700;font-size:1.1rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:10px}
+.modal__body{color:#666;font-size:.9rem;margin-bottom:16px}
+.modal__body-actions{display:flex;gap:8px}
+
+/* TOAST */
 .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fdf6ee;padding:10px 20px;border-radius:10px;font-weight:600;font-size:.82rem;z-index:200;white-space:nowrap;max-width:90%;text-align:center}
 .toast.hidden{display:none}
+
+/* HIDDEN */
+.hidden{display:none!important}
+
+/* BUTTON GROUP */
 .btn-group{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
 .btn-group .text_button{flex:1;min-width:120px}
+
+/* WAITING CHECKBOX */
+.chk{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#1a1a1a}
+.chk input{width:18px;height:18px;accent-color:#02516c}
+
+/* HOST SECTION */
 #host-sec{display:flex;flex-direction:column;gap:8px}
+
+/* NAVIGATION TABS */
+.nav-tabs{display:flex;background:#fdf6ee;border-top:4px solid #b8c9d3;flex-shrink:0}
+.nav-tab{flex:1;padding:10px;background:none;border:none;color:#666;font-size:1.3rem;cursor:pointer;transition:all .15s;border-top:2px solid transparent}
+.nav-tab.active{color:#02516c;border-top-color:#02516c}
+
+/* INPUT */
+.inp{padding:12px;border:2px solid #b8c9d3;border-radius:12px;font-size:1.1rem;background:#fdf6ee;text-align:center;font-family:'Courier New',monospace;letter-spacing:6px;outline:none;color:#1a1a1a}
+.inp:focus{border-color:#02516c}
+.inp--sm{padding:6px 10px;font-size:.85rem;letter-spacing:0}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:10px;color:#999;font-size:.75rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#b8c9d3}
+
+/* OVER */
+#scr-over{background:linear-gradient(180deg,#b8c9d3,#fdf6ee);align-items:center;justify-content:center;flex-direction:column}
+#scr-over h1{font-size:1.5rem;color:#1a1a1a;font-weight:bold;text-transform:uppercase;margin-bottom:10px}
+
+/* CONTENT STORAGE */
+.content-storage{margin:0 15px 10px;display:flex;background:#b3c79b;padding:10px;border-radius:16px;gap:10px;align-items:center}
+@media(max-width:1200px){.content-storage{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px;flex-wrap:wrap}}
+.content-storage__cats{flex:1;display:flex;flex-wrap:wrap;gap:6px}
+.content-storage__actions{display:flex;flex-direction:column;gap:6px}
+@media(max-width:1200px){.content-storage__actions{flex-direction:row;flex-wrap:wrap;width:100%}}
+
+/* DEMAND BOARD */
+.demand-board{background:#fdf6ee;border:2px solid #b8c9d3;border-radius:12px;padding:10px;margin:0 15px 10px}
+@media(max-width:1200px){.demand-board{margin-left:8px;margin-right:8px;margin-bottom:8px;border-radius:8px}}
+.demand-board__title{font-weight:700;font-size:.9rem;text-transform:uppercase;color:#1a1a1a;margin-bottom:8px;text-align:center}
 </style>
 </head>
 <body>
@@ -91,59 +258,117 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 <h1>🐱 Business cats</h1>
 <p>Мультиплеер · До 6 игроков</p>
 <div class="lobby-box">
-<button id="btn-create" class="text_button">🏠 Создать комнату</button>
+<button id="btn-create" class="text_button text_button--color-blue">🏠 Создать комнату</button>
 <div class="divider"><span>или войти по коду</span></div>
 <div style="display:flex;gap:10px">
 <input id="inp-code" type="text" class="inp" style="flex:1" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
-<button id="btn-join" class="text_button" style="flex:0 0 auto;width:auto;padding:12px 20px">🚀</button>
+<button id="btn-join" class="text_button text_button--color-green" style="flex:0 0 auto;width:auto;padding:12px 20px">🚀</button>
 </div>
 </div>
-<p class="lobby-hint">🎲 Имя выберется случайно</p>
+<p class="lobby-hint" style="font-size:.75rem;color:#999;text-align:center">🎲 Имя выберется случайно</p>
 </div>
 
 <!-- WAITING -->
 <div id="scr-wait" class="screen">
 <div class="wait-wrap">
 <h2>⏳ Комната <span id="d-code" class="code-text">------</span></h2>
-<button id="btn-copy" class="text_button" style="padding:8px 14px;font-size:.8rem">📋 Копировать код</button>
+<button id="btn-copy" class="text_button text_button--color-purple" style="padding:8px 14px;font-size:.8rem">📋 Копировать код</button>
 <div id="w-list" class="player-list"></div>
 <div id="host-sec" class="hidden">
 <label class="chk"><input type="checkbox" id="chk-host-play" checked><span>Хост играет</span></label>
-<button id="btn-start" class="text_button text_button--green" disabled>🏆 Начать игру</button>
+<button id="btn-start" class="text_button text_button--color-green" disabled>🏆 Начать игру</button>
 </div>
 <label class="chk"><input type="checkbox" id="chk-ready"><span>Я готов</span></label>
-<button id="btn-leave" class="text_button" style="background:#666">Выйти</button>
+<button id="btn-leave" class="text_button" style="background:#666;width:100%">Выйти</button>
 </div>
 </div>
 
 <!-- GAME -->
-<div id="scr-game" class="screen">
-<header id="topbar">
-<div class="tb-left">
-<span id="tb-emoji" class="tb-emoji">🐱</span>
-<div class="tb-info">
-<span id="tb-name" class="tb-name">Игрок</span>
-<span id="tb-role" class="tb-role">Роль</span>
+<div id="scr-game" class="screen" style="flex-direction:column">
+<header id="topbar" class="header_container">
+<div class="left_side_container">
+<div class="avatar_container">
+<span id="tb-emoji" class="avatar-icon">🐱</span>
+<div class="player-info">
+<span id="tb-name" class="player-name">Игрок</span>
+<span id="tb-role" class="player-role">Роль</span>
 </div>
 </div>
-<div class="tb-center">
-<span class="tb-val">🪙</span>
-<span id="tb-balance" class="tb-val">0</span>
 </div>
-<div class="tb-right">
-<span class="tb-sea">Сезон</span>
-<span id="tb-season" class="tb-sea">1</span>
-<span class="tb-max">/12</span>
-<span id="tb-timer" class="tb-timer">5:00</span>
+<div class="balance_container">
+<span class="balance-coin">🪙</span>
+<span id="tb-balance" class="balance-value">0</span>
+</div>
+<div class="right_side_container">
+<span class="season-label">Сезон</span>
+<span id="tb-season" class="season-value">1</span>
+<span class="season-max">/12</span>
+<span id="tb-timer" class="timer-value">5:00</span>
 </div>
 </header>
-<main id="game-content"></main>
-<nav id="bottom-nav">
-<button class="nav-btn active" data-tab="home">🏠</button>
-<button class="nav-btn" data-tab="cats">🐱</button>
-<button class="nav-btn" data-tab="city">🏙</button>
-<button class="nav-btn" data-tab="trade">🤝</button>
-<button class="nav-btn" data-tab="bank">🏦</button>
+
+<!-- NURSERY TAB -->
+<div id="tab-nursery" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<!-- Houses -->
+<div id="nur-houses" class="demand-board">
+<div class="demand-board__title">🏠 Дома</div>
+</div>
+<!-- Cats without home -->
+<div class="content-storage">
+<div id="nur-cats" class="content-storage__cats"></div>
+<div id="nur-actions" class="content-storage__actions"></div>
+</div>
+</div>
+</div>
+
+<!-- SHOP TAB -->
+<div id="tab-shop" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div class="content-storage">
+<div id="shp-cats" class="content-storage__cats"></div>
+<div id="shp-actions" class="content-storage__actions"></div>
+</div>
+</div>
+</div>
+
+<!-- CITY TAB -->
+<div id="tab-city" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div id="city-demand" class="demand-board">
+<div class="demand-board__title">🏙 Городской спрос</div>
+</div>
+<div id="city-trade" class="demand-board">
+<div class="demand-board__title">🛒 Магазин игроков</div>
+</div>
+</div>
+</div>
+
+<!-- BANK TAB -->
+<div id="tab-bank" class="tab-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;overflow:auto;padding:10px;background:#fdf6ee">
+<div id="bank-section" class="ltd__bank" style="border-radius:12px;padding:10px;height:auto">
+<div class="ltd-bank-guarantee__wrapper">
+<div id="bank-info" class="ltd-bank_guarantee__text"></div>
+<div class="ltd-bank_guarantee__block-main">
+<label style="color:#fdf6ee;font-size:.85rem;font-weight:700">Сумма:</label>
+<div class="number-input-wrapper">
+<input id="loan-amount" class="number-input" style="font-size:16px;min-height:28px" value="200" inputmode="numeric">
+</div>
+<button id="btn-take-loan" class="text_button text_button--color-green" style="font-size:12px;padding:6px 14px">💳 Взять</button>
+<button id="btn-repay-loan" class="text_button text_button--color-purple" style="font-size:12px;padding:6px 14px">💰 Вернуть</button>
+</div>
+<div style="color:#fdf6ee;font-size:.75rem;margin-top:5px">Лимит кредита: 1000 монет</div>
+</div>
+</div>
+</div>
+</div>
+
+<nav class="nav-tabs">
+<button class="nav-tab active" data-tab="nursery">🏠</button>
+<button class="nav-tab" data-tab="shop">🐱</button>
+<button class="nav-tab" data-tab="city">🏙</button>
+<button class="nav-tab" data-tab="bank">🏦</button>
 </nav>
 </div>
 
@@ -151,7 +376,7 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 <div id="scr-over" class="screen">
 <h1>🏆 Игра окончена</h1>
 <div id="leaderboard" style="width:90%;max-width:380px;display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
-<button id="btn-restart" class="text_button" style="max-width:200px">🔄 Заново</button>
+<button id="btn-restart" class="text_button text_button--color-blue" style="max-width:200px">🔄 Заново</button>
 </div>
 
 <!-- MODAL -->
@@ -159,9 +384,9 @@ html,body{height:100%;height:calc(var(--vh,1vh)*100);overflow:hidden;background:
 <div class="modal">
 <div class="modal__title" id="modal-title"></div>
 <div class="modal__body" id="modal-body"></div>
-<div style="display:flex;gap:8px;margin-top:16px">
-<button id="modal-cancel" class="text_button" style="background:#666;flex:1">Отмена</button>
-<button id="modal-confirm" class="text_button text_button--green" style="flex:1">ОК</button>
+<div class="modal__body-actions">
+<button id="modal-cancel" class="text_button text_button--color-purple" style="flex:1;font-size:12px">Отмена</button>
+<button id="modal-confirm" class="text_button text_button--color-green" style="flex:1;font-size:12px">ОК</button>
 </div>
 </div>
 </div>
