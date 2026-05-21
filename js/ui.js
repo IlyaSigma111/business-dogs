@@ -13,7 +13,7 @@ document.getElementById('chk-ready').onchange=e=>this.net.setReady(e.target.chec
 document.getElementById('chk-host-play').onchange=e=>this.net.setHostPlay(e.target.checked);
 document.querySelectorAll('.bnav').forEach(b=>b.onclick=()=>{document.querySelectorAll('.bnav').forEach(x=>x.classList.remove('active'));b.classList.add('active');this.tab=b.dataset.tab;this.renderGame()});
 this.net.on('wait',room=>this.renderWait(room));
-this.net.on('state',(room,me)=>{this.state=room;this.me=me;this.renderGame()});
+this.net.on('state',(room,me)=>{this.state=room;this.me=me;if(room.started)this.showScreen('scr-game');this.renderGame()});
 this.net.on('joined',code=>{document.getElementById('d-code').textContent=code;this.showScreen('scr-wait')});
 this.net.on('tick',t=>{document.getElementById('tb-timer').textContent=fmtT(t)});
 this.net.on('seasonEnd',()=>this.net.endSeason());
@@ -23,28 +23,34 @@ toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.clas
 openModal(title,body){document.getElementById('m-title').textContent=title;document.getElementById('m-body').innerHTML=body;document.getElementById('modal').classList.remove('hidden')}
 closeModal(){document.getElementById('modal').classList.add('hidden')}
 
-_pickRole(){
-const room=this.state;
-const players=room?.players||{};
+async _getRoleForJoin(code){
+try{
+const snap=await DB.ref('rooms/'+code).get();
+if(snap.exists()){
+const room=snap.val();
+const players=room.players||{};
 const shopCount=Object.values(players).filter(p=>p.role===ROLE_S).length;
 if(shopCount>=4)return ROLE_N;
+return Math.random()<0.4?ROLE_S:ROLE_N;
+}
+}catch(e){}
 return Math.random()<0.4?ROLE_S:ROLE_N;
 }
 
 async doCreate(){
 const name=document.getElementById('inp-name').value.trim();
 if(!name)return this.toast('Введи имя!',1);
-const role=this._pickRole();
+const role=Math.random()<0.4?ROLE_S:ROLE_N;
 this.toast('Создаём комнату...');
 await this.net.createRoom(name,role,true);
 }
 async doJoin(){
-const code=document.getElementById('inp-code').value.trim().toUpperCase();
+const code=document.getElementById('inp-code').value.trim();
 const name=document.getElementById('inp-name').value.trim();
 if(!code)return this.toast('Введи код!',1);
 if(!name)return this.toast('Введи имя!',1);
-const role=this._pickRole();
 this.toast('Заходим...');
+const role=await this._getRoleForJoin(code);
 await this.net.joinRoom(code,name,role);
 }
 copyCode(){

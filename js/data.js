@@ -21,6 +21,6 @@ const b=BREED_MAP[breed];const mult=age===AGE_P?.5:1;
 return{id:id||Date.now().toString(36)+Math.random().toString(36).slice(2,6),breed,name:b.name,emoji:b.icon,age,price:Math.round(b.base*mult),level:1};
 }
 function makeHouse(id){return{adults:{},puppies:{},id:id||'h'+Date.now().toString(36)}}
-function genCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function genCode(){return String(Math.floor(100000+Math.random()*900000))}
 function fmtT(s){const m=Math.floor(s/60);const sec=s%60;return m+':'+(sec<10?'0':'')+sec}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
