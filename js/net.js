@@ -4,19 +4,20 @@ on(e,fn){(this._listeners[e]=this._listeners[e]||[]).push(fn)}
 emit(e,...a){(this._listeners[e]||[]).forEach(f=>f(...a))}
 
 async createRoom(name,role,hostPlay=true){
-if(!name||!role)return{err:'Нет имени'};
-const code=genCode();
+if(!name)return{err:'Нет имени'};
+var code=genCode();
 this.roomCode=code;
 this.myId='p'+Date.now().toString(36);
-const pd={name:name,role:role,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:true,hostPlay:hostPlay!==false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:true};
-try{
-await DB.ref('rooms/'+code).set({code:code,season:1,timer:SEASON_SEC,demand:shuffle([...DEMAND_POOL]).slice(0,3),players:{},started:false,createdAt:Date.now()});
-await DB.ref('rooms/'+code+'/players/'+this.myId).set(pd);
-}catch(e){
-return{err:'Ошибка Firebase: '+e.message};
-}
 this.roomRef=DB.ref('rooms/'+code);
-this._setupListener();
+var pd={name:name,role:role,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:true,hostPlay:hostPlay!==false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:true};
+try{
+var roomData={code:code,season:1,timer:SEASON_SEC,demand:shuffle([...DEMAND_POOL]).slice(0,3),players:{},started:false,createdAt:Date.now()};
+await this.roomRef.set(roomData);
+await this.roomRef.child('players/'+this.myId).set(pd);
+}catch(e){
+return{err:'Firebase: '+e.message};
+}
+this._startListen(code);
 return{ok:true,code:code};
 }
 
@@ -25,40 +26,35 @@ this.roomCode=code;
 this.myId=this.myId||('p'+Date.now().toString(36));
 this.roomRef=DB.ref('rooms/'+code);
 try{
-const snap=await this.roomRef.get();
+var snap=await this.roomRef.get();
 if(!snap.exists()){
 return{err:'Комната не найдена'};
 }
-const room=snap.val();
+var room=snap.val();
 if(!room.players?.[this.myId]){
-const pd={name:name||'Игрок',role:role||ROLE_N,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:false,hostPlay:false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:false};
+var pd={name:name||'Игрок',role:role||ROLE_N,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:false,hostPlay:false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:false};
 await this.roomRef.child('players/'+this.myId).set(pd);
 }
 }catch(e){
 return{err:'Ошибка: '+e.message};
 }
-this._setupListener();
+this._startListen(code);
 return{ok:true,code:code};
 }
 
-_setupListener(){
-if(!this.roomRef)return;
-this.roomRef.on('value',snap=>{
+_startListen(code){
+var self=this;
+self.roomRef.on('value',function(snap){
 if(!snap||!snap.exists())return;
-const room=snap.val();
+var room=snap.val();
 if(!room)return;
-const me=room.players?.[this.myId]||null;
-this.emit('state',room,me);
-if(room.started){
-if(!this.timerInt){
-this.timerLeft=room.timer||SEASON_SEC;
-this.startTimer(room.timer);
-}
-}else{
-this.emit('wait',room);
+var me=room.players?.[self.myId]||null;
+self.emit('update',room,me);
+if(room.started&&!self.timerInt){
+self.timerLeft=room.timer||SEASON_SEC;
+self.startTimer(room.timer);
 }
 });
-this.emit('joined',this.roomCode);
 }
 
 startTimer(initial){
@@ -77,41 +73,41 @@ async startGame(){if(!this.roomRef)return;await this.roomRef.update({started:tru
 
 async addHouse(){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();const p=room.players?.[this.myId];if(!p)return;
-if(p.balance<100)return{err:'Нужно 100 монет'};
-const houses=p.houses||[];
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();var p=room.players?.[this.myId];if(!p)return;
+if((p.balance||0)<100)return{err:'Нужно 100 монет'};
+var houses=p.houses||[];
 houses.push(makeHouse());
-await this.roomRef.child('players/'+this.myId).update({houses:houses,balance:p.balance-100});
+await this.roomRef.child('players/'+this.myId).update({houses:houses,balance:(p.balance||0)-100});
 return{ok:true};
 }
 
 async buyDog(breed,age){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const p=snap.val().players?.[this.myId];if(!p)return;
-const b=BREED_MAP[breed];if(!b)return{err:'Нет породы'};
-const cost=age===AGE_P?Math.round(b.base*.5):b.base;
-if(p.balance<cost)return{err:'Не хватает монет'};
-const dog=makeDog(breed,age);
-const dogs=p.dogs||{};dogs[dog.id]=dog;
-await this.roomRef.child('players/'+this.myId).update({dogs:dogs,balance:p.balance-cost});
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var p=snap.val().players?.[this.myId];if(!p)return;
+var b=BREED_MAP[breed];if(!b)return{err:'Нет породы'};
+var cost=age===AGE_P?Math.round(b.base*.5):b.base;
+if((p.balance||0)<cost)return{err:'Не хватает монет'};
+var dog=makeDog(breed,age);
+var dogs=p.dogs||{};dogs[dog.id]=dog;
+await this.roomRef.child('players/'+this.myId).update({dogs:dogs,balance:(p.balance||0)-cost});
 return{ok:true,dog:dog};
 }
 
 async sellDogToCity(dogId){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();const p=room.players?.[this.myId];if(!p)return;
-const dog=p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
-const dem=room.demand?.find(d=>d.breed===dog.breed);
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();var p=room.players?.[this.myId];if(!p)return;
+var dog=p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
+var dem=room.demand?.find(function(d){return d.breed===dog.breed});
 if(!dem||dem.count<=0)return{err:'Нет спроса'};
-const price=dog.age===AGE_P?Math.round(dem.price*.5):dem.price;
+var price=dog.age===AGE_P?Math.round(dem.price*.5):dem.price;
 delete p.dogs[dogId];
-const newDem=room.demand.map(d=>d.breed===dog.breed?{...d,count:d.count-1}:d);
-const u={};
+var newDem=room.demand.map(function(d){return d.breed===dog.breed?{...d,count:d.count-1}:d});
+var u={};
 u['players/'+this.myId+'/dogs']=p.dogs;
-u['players/'+this.myId+'/balance']=p.balance+price;
+u['players/'+this.myId+'/balance']=(p.balance||0)+price;
 u.demand=newDem;
 await this.roomRef.update(u);
 return{ok:true,price:price};
@@ -119,10 +115,10 @@ return{ok:true,price:price};
 
 async putVitrine(dogId,price){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const p=snap.val().players?.[this.myId];if(!p)return;
-const dog=p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
-const vit=p.vitrine||{};vit[dogId]={...dog,price:price||dog.price};
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var p=snap.val().players?.[this.myId];if(!p)return;
+var dog=p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
+var vit=p.vitrine||{};vit[dogId]={...dog,price:price||dog.price};
 delete p.dogs[dogId];
 await this.roomRef.child('players/'+this.myId).update({dogs:p.dogs,vitrine:vit});
 return{ok:true};
@@ -130,43 +126,43 @@ return{ok:true};
 
 async buyFromVitrine(sellerId,dogId){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();const buyer=room.players?.[this.myId];if(!buyer)return;
-const seller=room.players?.[sellerId];if(!seller)return{err:'Продавец не найден'};
-const dog=seller.vitrine?.[dogId];if(!dog)return{err:'Собака не найдена'};
-if(buyer.balance<dog.price)return{err:'Не хватает монет'};
-const buyerDogs=buyer.dogs||{};buyerDogs[dogId]={...dog};
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();var buyer=room.players?.[this.myId];if(!buyer)return;
+var seller=room.players?.[sellerId];if(!seller)return{err:'Продавец не найден'};
+var dog=seller.vitrine?.[dogId];if(!dog)return{err:'Собака не найдена'};
+if((buyer.balance||0)<dog.price)return{err:'Не хватает монет'};
+var buyerDogs=buyer.dogs||{};buyerDogs[dogId]={...dog};
 delete seller.vitrine[dogId];
-const u={};
+var u={};
 u['players/'+this.myId+'/dogs']=buyerDogs;
-u['players/'+this.myId+'/balance']=buyer.balance-dog.price;
+u['players/'+this.myId+'/balance']=(buyer.balance||0)-dog.price;
 u['players/'+sellerId+'/vitrine']=seller.vitrine;
-u['players/'+sellerId+'/balance']=seller.balance+dog.price;
+u['players/'+sellerId+'/balance']=(seller.balance||0)+dog.price;
 await this.roomRef.update(u);
 return{ok:true};
 }
 
 async removeVitrine(dogId){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const p=snap.val().players?.[this.myId];if(!p)return;
-const dog=p.vitrine?.[dogId];if(!dog)return;
-const dogs=p.dogs||{};dogs[dogId]={...dog};delete p.vitrine[dogId];
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var p=snap.val().players?.[this.myId];if(!p)return;
+var dog=p.vitrine?.[dogId];if(!dog)return;
+var dogs=p.dogs||{};dogs[dogId]={...dog};delete p.vitrine[dogId];
 await this.roomRef.child('players/'+this.myId).update({dogs:dogs,vitrine:p.vitrine});
 }
 
 async putHouse(dogId,houseIdx,slot){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();const p=room.players?.[this.myId];if(!p)return;
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();var p=room.players?.[this.myId];if(!p)return;
 if(p.role!==ROLE_N)return{err:'Только питомник'};
-const house=p.houses?.[houseIdx];if(!house)return{err:'Нет дома'};
-const dog=p.vitrine?.[dogId]||p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
-const slotKey=dog.age===AGE_P?'puppies':'adults';
-const target=slot||slotKey;
-const maxSlots=target==='adults'?HOUSE_ADULT_WIN:HOUSE_PUPPY_WIN;
+var house=p.houses?.[houseIdx];if(!house)return{err:'Нет дома'};
+var dog=p.vitrine?.[dogId]||p.dogs?.[dogId];if(!dog)return{err:'Нет собаки'};
+var slotKey=dog.age===AGE_P?'puppies':'adults';
+var target=slot||slotKey;
+var maxSlots=target==='adults'?HOUSE_ADULT_WIN:HOUSE_PUPPY_WIN;
 if(Object.keys(house[target]||{}).length>=maxSlots)return{err:'Дом полон'};
-const hTarget=house[target]||{};hTarget['d'+Object.keys(hTarget).length+1]=dog;
+var hTarget=house[target]||{};hTarget['d'+Object.keys(hTarget).length+1]=dog;
 if(p.vitrine?.[dogId])delete p.vitrine[dogId];
 if(p.dogs?.[dogId])delete p.dogs[dogId];
 await this.roomRef.child('players/'+this.myId).update({houses:p.houses,vitrine:p.vitrine,dogs:p.dogs});
@@ -175,18 +171,18 @@ return{ok:true};
 
 async breedDogs(houseIdx){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();const p=room.players?.[this.myId];if(!p)return;
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();var p=room.players?.[this.myId];if(!p)return;
 if(p.role!==ROLE_N)return{err:'Только питомник'};
-const house=p.houses?.[houseIdx];if(!house)return;
-const aCount=Object.keys(house.adults||{}).length;
+var house=p.houses?.[houseIdx];if(!house)return;
+var aCount=Object.keys(house.adults||{}).length;
 if(aCount<2)return{err:'Нужно 2+ взрослых'};
-const adults=Object.values(house.adults);
-const breed=adults[0].breed;
-const count=Math.min(3,aCount);
-const puppies={};
-for(let i=0;i<count;i++){
-const pg=makeDog(breed,AGE_P);puppies[pg.id]=pg;
+var adults=Object.values(house.adults);
+var breed=adults[0].breed;
+var count=Math.min(3,aCount);
+var puppies={};
+for(var i=0;i<count;i++){
+var pg=makeDog(breed,AGE_P);puppies[pg.id]=pg;
 }
 house.adults={};
 house.puppies={...house.puppies,...puppies};
@@ -196,18 +192,18 @@ return{ok:true,count:count};
 
 async endSeason(){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const room=snap.val();
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var room=snap.val();
 if(room.season>=MAX_SEASONS){await this.roomRef.update({started:false});return}
-const next=room.season+1;
-const nextDem=shuffle([...DEMAND_POOL]).slice(0,3+Math.floor(next/3));
-const p=room.players?.[this.myId];
-let seasonE=0;
+var next=room.season+1;
+var nextDem=shuffle([...DEMAND_POOL]).slice(0,3+Math.floor(next/3));
+var p=room.players?.[this.myId];
+var seasonE=0;
 if(p?.role===ROLE_S){
-const vit=p.vitrine||{};
-Object.keys(vit).forEach(k=>{seasonE+=vit[k].price||0;vit[k].price=Math.round(vit[k].price*1.1)});
+var vit=p.vitrine||{};
+Object.keys(vit).forEach(function(k){seasonE+=vit[k].price||0;vit[k].price=Math.round(vit[k].price*1.1)});
 }
-const u={};
+var u={};
 u.season=next;
 u.timer=SEASON_SEC;
 u.demand=nextDem;
@@ -218,30 +214,30 @@ await this.roomRef.update(u);
 
 async sendTrade(toId,offerId,askPrice){
 if(!this.roomRef||!this.myId)return;
-const snap=await this.roomRef.get();if(!snap.exists())return;
-const p=snap.val().players?.[this.myId];if(!p)return;
-const dog=p.dogs?.[offerId]||p.vitrine?.[offerId];if(!dog)return;
-const trade={id:'t'+Date.now().toString(36),from:this.myId,fromName:p.name,dog:dog,price:askPrice||dog.price,status:'pending',to:toId,ts:Date.now()};
+var snap=await this.roomRef.get();if(!snap.exists())return;
+var p=snap.val().players?.[this.myId];if(!p)return;
+var dog=p.dogs?.[offerId]||p.vitrine?.[offerId];if(!dog)return;
+var trade={id:'t'+Date.now().toString(36),from:this.myId,fromName:p.name,dog:dog,price:askPrice||dog.price,status:'pending',to:toId,ts:Date.now()};
 await DB.ref('rooms/'+this.roomCode+'/trades/'+trade.id).set(trade);
 return{ok:true};
 }
 
 async respondTrade(tradeId,accept){
 if(!this.roomRef)return;
-const tradeSnap=await DB.ref('rooms/'+this.roomCode+'/trades/'+tradeId).get();
-const trade=tradeSnap.val();if(!trade)return;
+var tradeSnap=await DB.ref('rooms/'+this.roomCode+'/trades/'+tradeId).get();
+var trade=tradeSnap.val();if(!trade)return;
 if(accept){
-const roomSnap=await this.roomRef.get();
-const room=roomSnap.val();
-const buyer=room.players?.[this.myId];
+var roomSnap=await this.roomRef.get();
+var room=roomSnap.val();
+var buyer=room.players?.[this.myId];
 if(!buyer||(buyer.balance||0)<trade.price)return{err:'Не хватает'};
-const seller=room.players?.[trade.from];if(!seller)return{err:'Продавец не найден'};
-const buyerDogs=buyer.dogs||{};buyerDogs[trade.dog.id]={...trade.dog};
+var seller=room.players?.[trade.from];if(!seller)return{err:'Продавец не найден'};
+var buyerDogs=buyer.dogs||{};buyerDogs[trade.dog.id]={...trade.dog};
 if(seller.vitrine?.[trade.dog.id])delete seller.vitrine[trade.dog.id];
 if(seller.dogs?.[trade.dog.id])delete seller.dogs[trade.dog.id];
-const u={};
+var u={};
 u['players/'+this.myId+'/dogs']=buyerDogs;
-u['players/'+this.myId+'/balance']=buyer.balance-trade.price;
+u['players/'+this.myId+'/balance']=(buyer.balance||0)-trade.price;
 u['players/'+trade.from+'/balance']=(seller.balance||0)+trade.price;
 u['trades/'+tradeId+'/status']='done';
 await this.roomRef.update(u);
@@ -252,10 +248,11 @@ return{ok:true};
 }
 
 leaveRoom(){
-if(this.roomRef&&this.myId){
-try{this.roomRef.child('players/'+this.myId).remove()}catch(e){}
+var self=this;
+if(self.roomRef&&self.myId){
+try{self.roomRef.child('players/'+self.myId).remove()}catch(e){}
 }
-if(this.sync&&this.roomRef){try{this.roomRef.off('value',this.sync)}catch(e){}}
-clearInterval(this.timerInt);this.timerInt=null;this.roomRef=null;this.myId=null;this.roomCode=null;
+if(self.sync&&self.roomRef){try{self.roomRef.off('value',self.sync)}catch(e){}}
+clearInterval(self.timerInt);self.timerInt=null;self.roomRef=null;self.myId=null;self.roomCode=null;
 }
 }

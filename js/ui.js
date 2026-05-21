@@ -17,493 +17,316 @@ b.classList.add('active');
 this.tab=b.dataset.tab;
 this.renderGame();
 });
-this.net.on('wait',room=>this.renderWait(room));
-this.net.on('state',(room,me)=>{
-this.state=room;
-this.me=me;
-if(room&&room.started){
-this.showScreen('scr-game');
+var self=this;
+this.net.on('update',function(room,me){
+self.state=room;
+self.me=me;
+if(room.started){
+document.getElementById('d-code').textContent=self.net.roomCode||'';
+self.showScreen('scr-game');
+}else{
+document.getElementById('d-code').textContent=self.net.roomCode||'';
+self.showScreen('scr-wait');
 }
-this.renderGame();
+self.renderWait(room);
+self.renderGame();
 });
-this.net.on('joined',code=>{
-document.getElementById('d-code').textContent=code;
-this.showScreen('scr-wait');
-if(this.state)this.renderWait(this.state);
-});
-this.net.on('tick',t=>{
-const el=document.getElementById('tb-timer');
-if(el)el.textContent=fmtT(t);
-});
-this.net.on('seasonEnd',()=>this.net.endSeason());
-}
-
-leaveRoom(){
-this.net.leaveRoom();
-this.state=null;
-this.me=null;
-this.showScreen('scr-lobby');
-}
-
-showScreen(id){
-document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-const el=document.getElementById(id);
-if(el)el.classList.add('active');
-}
-
-toast(msg,err){
-const t=document.getElementById('toast');
-if(!t)return;
-t.textContent=msg;
-t.className='toast'+(err?' te':'');
-setTimeout(()=>t.className='toast hidden',2500);
-}
-
-openModal(title,body){
-document.getElementById('m-title').textContent=title;
-document.getElementById('m-body').innerHTML=body;
-document.getElementById('modal').classList.remove('hidden');
-}
-
-closeModal(){
-document.getElementById('modal').classList.add('hidden');
-}
-
-async _getRoleForJoin(code){
-try{
-const snap=await DB.ref('rooms/'+code).get();
-if(snap.exists()){
-const room=snap.val();
-const players=room.players||{};
-const shopCount=Object.values(players).filter(p=>p&&p.role===ROLE_S).length;
-if(shopCount>=4)return ROLE_N;
-return Math.random()<0.4?ROLE_S:ROLE_N;
-}
-}catch(e){}
-return Math.random()<0.4?ROLE_S:ROLE_N;
 }
 
 async doCreate(){
-const name=genName();
-const role=Math.random()<0.4?ROLE_S:ROLE_N;
+var name=genName();
+var role=Math.random()<0.4?ROLE_S:ROLE_N;
 this.toast('Создаём комнату ('+name+')...');
-const r=await this.net.createRoom(name,role,true);
+var r=await this.net.createRoom(name,role,true);
 if(r&&r.err)return this.toast(r.err,1);
 }
 
 async doJoin(){
-const code=document.getElementById('inp-code').value.trim();
-const name=genName();
+var code=document.getElementById('inp-code').value.trim();
 if(!code)return this.toast('Введи код!',1);
-if(!name)return this.toast('Введи имя!',1);
-this.toast('Заходим...');
-const role=await this._getRoleForJoin(code);
-const r=await this.net.joinRoom(code,name,role);
+var name=genName();
+this.toast('Входим ('+name+')...');
+var r=await this.net.joinRoom(code,name);
 if(r&&r.err)return this.toast(r.err,1);
 }
 
+showScreen(id){
+document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active')});
+document.getElementById(id).classList.add('active');
+}
+
 copyCode(){
-const code=document.getElementById('d-code').textContent;
-if(!code||code==='------')return;
-navigator.clipboard?.writeText(code).then(()=>this.toast('Код скопирован!'));
+if(navigator.clipboard){navigator.clipboard.writeText(this.net.roomCode).then(()=>this.toast('Скопировано!'))}
+}
+
+toast(msg,sec){
+sec=sec||2;
+var el=document.getElementById('toast');
+if(!el)return;
+el.textContent=msg;el.classList.add('show');
+var self=this;
+clearTimeout(this._tout);
+this._tout=setTimeout(function(){el.classList.remove('show')},sec*1000);
+}
+
+closeModal(){document.getElementById('modal').classList.remove('show')}
+
+leaveRoom(){
+this.net.leaveRoom();
+this.state=null;this.me=null;
+this.showScreen('scr-lobby');
+this.toast('Покинули комнату');
 }
 
 renderWait(room){
-if(!room)return;
-const grid=document.getElementById('wait-players');
-if(!grid)return;
-const entries=Object.entries(room.players||{});
-const players=entries.map(([id,p])=>({id,...(p||{})}));
-
-grid.innerHTML=players.map(p=>{
-const name=(p.name||'Игрок');
-const role=(p.role===ROLE_N?'🐕 Питомник':'🏪 Зоомагазин');
-const ready=(p.ready?'✓':'○');
-const host=(p.isHost?' 👑':'');
-return `<div class="wp-item${p.ready?' ready':''}">
-<span class="wp-status">${ready}</span>
-<span class="wp-name">${name}${host}</span>
-<span class="wp-role">${role}</span>
-</div>`;
-}).join('');
-
-const rCount=players.filter(p=>p.ready).length;
-document.getElementById('r-cnt').textContent=rCount;
-document.getElementById('r-tot').textContent=players.length;
-
-const me=room.players?.[this.net.myId];
-const isHost=me&&me.isHost;
-document.getElementById('btn-start').disabled=rCount<1||!isHost;
-
-if(me){
-document.getElementById('chk-ready').checked=!!me.ready;
-document.getElementById('chk-host-play').checked=me.hostPlay!==false;
-document.getElementById('chk-host-play').closest('.chk').style.display=isHost?'flex':'none';
+var listEl=document.getElementById('wait-players');
+var btnStart=document.getElementById('btn-start');
+var chkReady=document.getElementById('chk-ready');
+var cntEl=document.getElementById('r-cnt');
+var totEl=document.getElementById('r-tot');
+var hostCtrl=document.getElementById('host-controls');
+var hcList=document.getElementById('hc-list');
+if(!room||!room.players){
+if(listEl)listEl.innerHTML='<p>Загрузка...</p>';
+return;
 }
-
-const hc=document.getElementById('host-controls');
-if(me&&me.isHost){
-hc.classList.remove('hidden');
-const list=document.getElementById('hc-list');
-list.innerHTML=players.map(p=>{
-const name=(p.name||'Игрок');
-const isN=p.role===ROLE_N;
-return `<div class="hc-row">
-<span class="hc-name">${name}</span>
-<button class="hc-rbtn${isN?' active':''}" onclick="UI._changeRole('${p.id}','${ROLE_N}')">🐕</button>
-<button class="hc-rbtn${!isN?' active':''}" onclick="UI._changeRole('${p.id}','${ROLE_S}')">🏪</button>
-</div>`;
-}).join('');
-}else{
-hc.classList.add('hidden');
+var players=room.players;
+var keys=Object.keys(players);
+var readyCount=0;
+var total=keys.length;
+var html='';
+var hcHtml='';
+var self=this;
+keys.forEach(function(k){
+var p=players[k];
+if(!p)return;
+var pName=p.name||'Игрок';
+var pRole=p.role||ROLE_N;
+var isReady=p.ready===true;
+var isHost=p.isHost===true;
+var balance=p.balance||0;
+var bankrupt=p.bankrupt===true;
+if(isReady)readyCount++;
+var roleIcon=pRole===ROLE_S?'💰':'🏠';
+var readyClass=isReady?'r-on':'r-off';
+var hostBadge=isHost?'<span class="h-badge">👑</span>':'';
+var bankBadge=bankrupt?'<span class="b-badge">💀 Банкрот</span>':'';
+html+='<div class="w-card">';
+html+='<div class="w-main"><div class="w-avatar">'+roleIcon+' '+pName+'</div>'+hostBadge+bankBadge+'</div>';
+html+='<div class="w-meta"><span class="'+readyClass+'">Готов</span><span>💰 '+balance+'</span></div>';
+html+='</div>';
+hcHtml+='<div class="hc-row"><span>'+pName+'</span><span class="role-toggle" data-pid="'+k+'">Сменить</span></div>';
+});
+if(listEl)listEl.innerHTML=html;
+if(cntEl)cntEl.textContent=readyCount;
+if(totEl)totEl.textContent=total;
+if(hostCtrl){
+var me=players[self.net.myId];
+hostCtrl.style.display=(me&&me.isHost)?'block':'none';
+}
+if(hcList)hcList.innerHTML=hcHtml;
+document.querySelectorAll('.role-toggle').forEach(function(el){
+el.onclick=function(){
+var pid=this.getAttribute('data-pid');
+var cur=players[pid];
+var newRole=cur.role===ROLE_S?ROLE_N:ROLE_S;
+self.net.setRole(pid,newRole);
+};
+});
+if(btnStart){
+var me=players[this.net.myId];
+btnStart.style.display=(me&&me.isHost&&!room.started)?'block':'none';
+btnStart.disabled=readyCount<2;
+}
+if(chkReady){
+var me=players[this.net.myId];
+chkReady.checked=me?me.ready===true:false;
 }
 }
 
 renderGame(){
-if(!this.state||!this.me)return;
-this.renderTopBar();
-const area=document.getElementById('main-view');
-if(this.tab==='main')this.renderDashboard(area);
-else if(this.tab==='mydogs')this.renderMyDogs(area);
-else if(this.tab==='city')this.renderCity(area);
-else if(this.tab==='trade')this.renderTrade(area);
-else if(this.tab==='breed')this.renderBreed(area);
-else if(this.tab==='bank')this.renderBank(area);
-this.renderPanels();
+if(!this.state)return;
+var room=this.state;
+var me=room.players?.[this.net.myId]||{};
+var nameEl=document.getElementById('tb-name');
+var roleEl=document.getElementById('tb-role');
+var balEl=document.getElementById('tb-balance');
+var seaEl=document.getElementById('tb-season');
+if(nameEl)nameEl.textContent=me.name||'Игрок';
+if(roleEl)roleEl.textContent=me.role===ROLE_S?'Магазин':'Питомник';
+if(balEl)balEl.textContent=me.balance||0;
+if(seaEl)seaEl.textContent=room.season||1;
+if(this.tab==='main')this.renderMain(room,me);
+if(this.tab==='mydogs')this.renderDogs(room,me);
+if(this.tab==='city')this.renderCity(room,me);
+if(this.tab==='trade')this.renderTrade(room,me);
+if(this.tab==='breed')this.renderBreed(room,me);
+if(this.tab==='bank')this.renderBank(room,me);
 }
 
-renderTopBar(){
-const me=this.me;
-if(!me)return;
-const tbName=document.getElementById('tb-name');
-if(tbName)tbName.textContent=me.name||'Игрок';
-const tbRole=document.getElementById('tb-role');
-if(tbRole)tbRole.textContent=me.role===ROLE_N?'Питомник':'Зоомагазин';
-const tbAvatar=document.getElementById('tb-avatar');
-if(tbAvatar)tbAvatar.textContent=me.role===ROLE_N?'🐕':'🏪';
-const tbBal=document.getElementById('tb-balance');
-if(tbBal)tbBal.textContent=me.balance||0;
-const tbSeason=document.getElementById('tb-season');
-if(tbSeason)tbSeason.textContent=this.state.season||1;
-}
-
-renderDashboard(el){
-const me=this.me;
-if(!me)return;
-const dogCount=Object.keys(me.dogs||{}).length;
-const houseCount=(me.houses||[]).length;
-const vitCount=Object.keys(me.vitrine||{}).length;
-el.innerHTML=`
-<div class="dash">
-<div class="dash-card"><div class="dc-icon">🪙</div><div class="dc-val">${me.balance||0}</div><div class="dc-lbl">Монеты</div></div>
-<div class="dash-card"><div class="dc-icon">🐕</div><div class="dc-val">${dogCount}</div><div class="dc-lbl">Собаки</div></div>
-<div class="dash-card"><div class="dc-icon">🏠</div><div class="dc-val">${houseCount}</div><div class="dc-lbl">Дома</div></div>
-<div class="dash-card"><div class="dc-icon">📦</div><div class="dc-val">${vitCount}</div><div class="dc-lbl">Витрина</div></div>
-<div class="dash-card"><div class="dc-icon">📈</div><div class="dc-val">${me.totalE||0}</div><div class="dc-lbl">Всего</div></div>
-<div class="dash-card"><div class="dc-icon">🏆</div><div class="dc-val">${me.seasonE||0}</div><div class="dc-lbl">Сезон</div></div>
-</div>
-<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-${me.role===ROLE_N?'<button class="btn btn-green" onclick="UI._addHouse()">🏠 Дом (100🪙)</button>':''}
-<button class="btn btn-blue" onclick="UI._buyDog()">🐕 Купить</button>
-<button class="btn btn-orange" onclick="UI._sellDog()">🏚 Продать</button>
-</div>`;
-}
-
-renderMyDogs(el){
-const me=this.me;
-if(!me)return;
-const dogs=Object.entries(me.dogs||{});
-const vit=Object.entries(me.vitrine||{});
-let h='<div class="city-board"><div class="city-title">🐕 Мои собаки</div>';
-if(!dogs.length)h+='<div style="text-align:center;color:#888;padding:16px">Пусто — купи щенка!</div>';
-dogs.forEach(([k,d])=>{
-h+=`<div class="dog-card"><span class="dog-emoji">${d.emoji||'🐕'}</span><div class="dog-info"><div class="dog-name">${d.name||'Собака'}</div><div class="dog-meta">${d.age==='puppy'?'Щенок':'Взрослая'}</div></div><span class="dog-price">${d.price||0}🪙</span></div>`;
-});
-h+='</div>';
-if(vit.length){
-h+='<div class="city-board" style="margin-top:10px"><div class="city-title">📦 Витрина</div>';
-vit.forEach(([k,d])=>{
-h+=`<div class="dog-card"><span>${d.emoji||'🐕'}</span><div class="dog-info"><div class="dog-name">${d.name||'Собака'}</div></div><span class="dog-price">${d.price||0}🪙</span><button class="btn btn-red btn-sm" onclick="UI._rmVit('${k}')">✕</button></div>`;
-});
-h+='</div>';
-}
-el.innerHTML=h;
-}
-
-renderCity(el){
-const me=this.me;
-if(!me)return;
-const dem=this.state.demand||[];
-let h='<div class="city-board"><div class="city-title">🏚 Спрос города</div>';
-dem.forEach(d=>{
-const b=BREED_MAP[d.breed];
-h+=`<div class="demand-row"><span class="demand-emoji">${b?.icon||'🐕'}</span><div class="demand-info"><div class="demand-name">${b?.name||d.breed}</div><div class="demand-qty">Нужно: ${d.count||0}</div></div><span class="demand-price">${d.price||0}🪙</span></div>`;
-});
-h+='</div>';
-const myDogs=Object.entries(me.dogs||{}).filter(([,d])=>{const dm=dem.find(x=>x.breed===d.breed);return dm&&dm.count>0});
-if(myDogs.length){
-h+='<div class="city-board" style="margin-top:10px"><div class="city-title">Продать</div>';
-myDogs.forEach(([k,d])=>{
-h+=`<div class="dog-card"><span>${d.emoji||'🐕'}</span><span>${d.name||'Собака'}</span><button class="btn btn-green btn-sm" onclick="UI._sellOne('${k}')">Продать</button></div>`;
-});
-h+='</div>';
-}
-el.innerHTML=h;
-}
-
-renderTrade(el){
-const me=this.me;
-if(!me)return;
-const allPlayers=Object.entries(this.state.players||{}).filter(([k])=>k!==this.net.myId);
-const myDogs=Object.entries(me.dogs||{});
-let h='<div class="city-board"><div class="city-title">🤝 Торговля</div>';
-h+='<div style="margin-bottom:10px;font-weight:600;font-size:.85rem">Отправить предложение:</div>';
-if(!myDogs.length)h+='<div style="color:#888;padding:8px">Нет собак</div>';
-myDogs.forEach(([k,d])=>{
-const opts=allPlayers.map(([id,p])=>`<option value="${id}">${p.name||'Игрок'}</option>`).join('');
-h+=`<div class="dog-card"><span>${d.emoji||'🐕'}</span><span>${d.name||'Собака'}</span><span>${d.price||0}🪙</span><select class="trade-sel" data-dog="${k}" style="padding:4px;border-radius:6px;border:1px solid #ddd;font-size:.75rem">${opts}</select><button class="btn btn-blue btn-sm" onclick="UI._sendTrade('${k}')">→</button></div>`;
-});
-const trades=Object.entries(this.state.trades||{});
-const incoming=trades.filter(([k,t])=>t.status==='pending'&&t.to===this.net.myId);
-if(incoming.length){
-h+='<div style="margin-top:12px;font-weight:600;font-size:.85rem">Входящие:</div>';
-incoming.forEach(([k,t])=>{
-h+=`<div class="dog-card"><span>${t.dog?.emoji||'🐕'}</span><span>${t.fromName||''}</span><span>${t.price||0}🪙</span><button class="btn btn-green btn-sm" onclick="UI._respTrade('${k}',true)">✓</button><button class="btn btn-red btn-sm" onclick="UI._respTrade('${k}',false)">✕</button></div>`;
-});
-}
-h+='</div>';
-el.innerHTML=h;
-}
-
-renderBreed(el){
-const me=this.me;
-if(!me)return;
-if(me.role!==ROLE_N){
-el.innerHTML='<div class="city-board"><div class="city-title">💘 Разведение</div><div style="text-align:center;color:#888;padding:20px">Только для питомников!</div></div>';
-return;
-}
-const houses=me.houses||[];
-let h='<div class="city-board"><div class="city-title">💘 Разведение</div>';
-if(!houses.length)h+='<div style="color:#888;padding:8px">Купите дом сначала</div>';
-houses.forEach((house,i)=>{
-const aCount=Object.keys(house.adults||{}).length;
-const pCount=Object.keys(house.puppies||{}).length;
-let wins='';
-for(let j=0;j<HOUSE_ADULT_WIN;j++){
-const a=Object.values(house.adults||{})[j];
-wins+=`<div class="house-win${a?'':' empty'}">${a?a.emoji||'🐕':'🔲'}</div>`;
-}
-let pups='';
-for(let j=0;j<HOUSE_PUPPY_WIN;j++){
-const p=Object.values(house.puppies||{})[j];
-pups+=`<span class="house-puppy">${p?p.emoji||'🐕':'·'}</span>`;
-}
-h+=`<div class="house"><div class="house-roof">Дом #${i+1}</div>
-<div class="house-windows">${wins}</div>
-<div class="house-puppies">${pups}</div>
-<div class="house-actions">
-<button class="btn btn-green btn-sm" onclick="UI._putDogHouse(${i},'adults')">Взрослые</button>
-<button class="btn btn-green btn-sm" onclick="UI._putDogHouse(${i},'puppies')">Щенки</button>
-<button class="btn btn-orange btn-sm" onclick="UI._breed(${i})" ${aCount<2?'disabled':''}>Развести</button>
-</div></div>`;
-});
-h+='</div>';
-const dogs=Object.entries(me.dogs||{});
-if(dogs.length){
-h+='<div class="city-board" style="margin-top:10px"><div class="city-title">Мои собаки</div>';
-dogs.forEach(([k,d])=>{
-h+=`<div class="dog-card"><span>${d.emoji||'🐕'}</span><span>${d.name||'Собака'}</span><span class="dog-meta">${d.age==='puppy'?'Щенок':'Взрослая'}</span><button class="btn btn-blue btn-sm" onclick="UI._quickPut('${k}')">В дом</button></div>`;
-});
-h+='</div>';
-}
-el.innerHTML=h;
-}
-
-renderBank(el){
-const me=this.me;
-if(!me)return;
-const credits=me.credits||{};
-let h='<div class="city-board"><div class="city-title">🏦 Банк</div>';
-h+=`<div class="dash-card" style="margin-bottom:14px"><div class="dc-icon">🪙</div><div class="dc-val">${me.balance||0}</div><div class="dc-lbl">На руках</div></div>`;
-h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><button class="btn btn-green" onclick="UI._takeCredit(100)">Кредит 100→130</button><button class="btn btn-orange" onclick="UI._takeCredit(500)">Кредит 500→650</button></div>';
-const activeCredits=Object.entries(credits).filter(([,c])=>c&&!c.paid);
-if(activeCredits.length){
-h+='<div style="font-weight:600;font-size:.85rem;margin-bottom:8px">Активные кредиты:</div>';
-activeCredits.forEach(([k,c])=>{
-h+=`<div class="dog-card"><span>💳</span><span>${c.amount}→${c.payback}</span><button class="btn btn-green btn-sm" onclick="UI._payCredit('${k}')">Вернуть</button></div>`;
-});
-}
-h+='</div>';
-el.innerHTML=h;
-}
-
-renderPanels(){
-const left=document.getElementById('left-content');
-const right=document.getElementById('right-content');
-if(!left||!right)return;
-const me=this.me;
-if(!me)return;
-
-if(me.role===ROLE_N){
-const houses=me.houses||[];
-let h='<div class="panel-title">🏠 Дома</div>';
-if(!houses.length)h+='<div style="color:#888;font-size:.78rem;padding:8px">Нет домов</div>';
-houses.forEach((house,i)=>{
-const aCount=Object.keys(house.adults||{}).length;
-const pCount=Object.keys(house.puppies||{}).length;
-h+=`<div class="card" style="font-size:.78rem"><b>Дом #${i+1}</b><br>Взр: ${aCount}/${HOUSE_ADULT_WIN} · Щен: ${pCount}/${HOUSE_PUPPY_WIN}</div>`;
-});
-left.innerHTML=h;
+renderMain(room,me){
+var left=document.getElementById('left-content');
+var main=document.getElementById('main-view');
+var right=document.getElementById('right-content');
+if(!left||!main)return;
+var demand=room.demand||[];
+var demHtml=demand.map(function(d){
+return'<div class="d-card"><b>'+d.breed+'</b><br>'+d.price+'💰<br>x'+d.count+'</div>';
+}).join('');
+left.innerHTML='<h3>Спрос</h3>'+demHtml;
+if(me.role===ROLE_S){
+main.innerHTML='<h3>Магазин</h3><p>Купите дом для витрины.</p><button class="l-btn primary" onclick="ui.actBuyHouse()">🏠 Купить дом (100💰)</button>';
+this.renderShopVitrine(main,me);
 }else{
-const vit=Object.values(me.vitrine||{});
-let h='<div class="panel-title">🏪 Витрина</div>';
-if(!vit.length)h+='<div style="color:#888;font-size:.78rem;padding:8px">Пуста</div>';
-vit.forEach(d=>{
-h+=`<div class="card" style="font-size:.78rem;display:flex;align-items:center;gap:6px"><span>${d.emoji||'🐕'}</span><span>${d.name||''}</span><span style="margin-left:auto;font-weight:700;color:#2e7d32">${d.price||0}🪙</span></div>`;
+main.innerHTML='<h3>Питомник</h3><p>Покупайте собак, продавайте в город.</p><button class="l-btn primary" onclick="ui.actBuyDog()">🐶 Купить щенка</button>';
+this.renderMyDogs(main,me);
+}
+var vit=me.vitrine||{};
+var vitKeys=Object.keys(vit);
+var vitHtml=vitKeys.length===0?'<p class="hint">Пусто</p>':vitKeys.map(function(k){
+var d=vit[k];
+return'<div class="d-row"><b>'+d.breed+'</b> - '+d.price+'💰 <button class="l-btn s" onclick="ui.removeVitrine(\''+k+'\')">Снять</button></div>';
+}).join('');
+if(right)right.innerHTML='<h3>Витрина</h3>'+vitHtml;
+}
+
+renderShopVitrine(parent,me){
+var vit=me.vitrine||{};
+var vitKeys=Object.keys(vit);
+if(vitKeys.length===0)return;
+var html='<h4>Витрина</h4>';
+vitKeys.forEach(function(k){
+var d=vit[k];
+html+='<div class="d-row"><b>'+d.breed+'</b> - '+d.price+'💰 <button class="l-btn s" onclick="ui.removeVitrine(\''+k+'\')">Снять</button></div>';
 });
-left.innerHTML=h;
+parent.innerHTML+=html;
 }
 
-const players=Object.entries(this.state.players||{}).filter(([k])=>k!==this.net.myId);
-let rh='<div class="panel-title">👥 Игроки</div>';
-if(!players.length)rh+='<div style="color:#888;font-size:.78rem;padding:8px">Нет других</div>';
-players.forEach(([id,p])=>{
-rh+=`<div class="card" style="font-size:.78rem;display:flex;align-items:center;gap:6px"><span>${p.role===ROLE_N?'🐕':'🏪'}</span><span style="flex:1">${p.name||'Игрок'}</span><span style="font-weight:700">${p.balance||0}🪙</span></div>`;
+renderMyDogs(parent,me){
+var dogs=me.dogs||{};
+var keys=Object.keys(dogs);
+if(keys.length===0)return;
+var html='<h4>Мои собаки</h4>';
+keys.forEach(function(k){
+var d=dogs[k];
+var ageLbl=d.age===AGE_P?'Щенок':'Взрослый';
+html+='<div class="d-row"><b>'+d.breed+'</b> '+ageLbl+' <button class="l-btn s" onclick="ui.actSellDog(\''+k+'\')">Продать</button></div>';
 });
-right.innerHTML=rh;
+parent.innerHTML+=html;
 }
 
-static _changeRole(pid,role){
-if(!window._ui?.state?.players)return;
-const me=window._ui.state.players[window._ui.net.myId];
-if(!me||!me.isHost)return window._ui.toast('Только хост!',1);
-if(role===ROLE_S){
-const sc=Object.values(window._ui.state.players).filter(p=>p&&p.role===ROLE_S).length;
-const current=window._ui.state.players[pid];
-if(sc>=4&&current&&current.role!==ROLE_S)return window._ui.toast('Макс 4 зоомагазина!',1);
-}
-window._ui.net.roomRef.child('players/'+pid+'/role').set(role);
-}
-
-static _addHouse(){
-if(!window._ui)return;
-window._ui.net.addHouse().then(r=>{
-if(r?.ok)window._ui.toast('Дом куплен!');
-else if(r?.err)window._ui.toast(r.err,1);
-}).catch(e=>window._ui.toast('Ошибка',1));
+actBuyDog(){
+var self=this;
+var room=self.state;
+if(!room)return;
+var breed=prompt('Порода ('+Object.keys(BREED_MAP).join(', ')+')?');
+if(!breed||!BREED_MAP[breed])return self.toast('Нет породы',1);
+var age=prompt('Возраст (0=щенок, 1=взрослый)?');
+age=parseInt(age)||0;
+var b=BREED_MAP[breed];
+var cost=age===AGE_P?Math.round(b.base*0.5):b.base;
+if(me.balance<cost)return self.toast('Не хватает монет ('+cost+')',1);
+self.net.buyDog(breed,age).then(function(r){if(r&&r.err)self.toast(r.err,2)});
 }
 
-static _buyDog(){
-const breeds= BREEDS.map(b=>`<button class="btn btn-green" style="margin:4px" onclick="UI._doBuy('${b.id}','puppy')">${b.icon} ${b.name} (${Math.round(b.base*.5)}🪙)</button>`).join('');
-const breedsA= BREEDS.map(b=>`<button class="btn btn-blue" style="margin:4px" onclick="UI._doBuy('${b.id}','adult')">${b.icon} ${b.name} (${b.base}🪙)</button>`).join('');
-const html=`<div style="text-align:center"><div style="font-weight:700;margin-bottom:8px">Щенки</div>${breeds}<div style="font-weight:700;margin:12px 0 8px">Взрослые</div>${breedsA}</div>`;
-window._ui.openModal('Купить собаку',html);
+actSellDog(dogId){
+var self=this;
+self.net.sellDogToCity(dogId).then(function(r){
+if(r&&r.ok)self.toast('Продано за '+r.price+'💰');
+else if(r&&r.err)self.toast(r.err,2);
+});
 }
 
-static _doBuy(breed,age){
-window._ui.net.buyDog(breed,age).then(r=>{
-window._ui.closeModal();
-if(r?.ok)window._ui.toast('Куплено! '+(r.dog?.name||''));
-else window._ui.toast(r?.err||'Ошибка',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
+actBuyHouse(){
+var self=this;
+self.net.addHouse().then(function(r){if(r&&r.err)self.toast(r.err,2)});
 }
 
-static _sellDog(){
-if(!window._ui?.me)return;
-const dogs=Object.entries(window._ui.me.dogs||{});
-if(!dogs.length)return window._ui.toast('Нет собак!',1);
-const list=dogs.map(([k,d])=>`<div class="dog-card"><span>${d.emoji||'🐕'}</span><span>${d.name||''}</span><button class="btn btn-green btn-sm" onclick="UI._doSell('${k}')">Продать</button></div>`).join('');
-window._ui.openModal('Продать городу',list);
+removeVitrine(dogId){
+this.net.removeVitrine(dogId);
 }
 
-static _doSell(id){
-window._ui.net.sellDogToCity(id).then(r=>{
-window._ui.closeModal();
-if(r?.ok)window._ui.toast('+'+r.price+'🪙');
-else window._ui.toast(r?.err||'Нет спроса',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
+renderDogs(room,me){
+var el=document.getElementById('main-view');
+if(!el)return;
+var dogs=me.dogs||{};
+var keys=Object.keys(dogs);
+if(keys.length===0){el.innerHTML='<h3>Мои собаки</h3><p class="hint">Нет собак</p>';return}
+var html='<h3>Мои собаки</h3>';
+keys.forEach(function(k){
+var d=dogs[k];
+html+='<div class="d-card"><b>'+d.breed+'</b><br>Возраст: '+(d.age===AGE_P?'Щенок':'Взрослый')+'<br>Характер: '+d.temper+'<br><button class="l-btn s" onclick="ui.actSellDog(\''+k+'\')">Продать</button></div>';
+});
+el.innerHTML=html;
 }
 
-static _sellOne(id){
-window._ui.net.sellDogToCity(id).then(r=>{
-if(r?.ok)window._ui.toast('+'+r.price+'🪙');
-else window._ui.toast(r?.err||'Нет спроса',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
+renderCity(room,me){
+var el=document.getElementById('main-view');
+if(!el)return;
+var demand=room.demand||[];
+var html='<h3>Городской спрос</h3>';
+html+='<div class="d-grid">'+demand.map(function(d){
+return'<div class="d-card"><b>'+d.breed+'</b><br>'+d.price+'💰<br>x'+d.count+'</div>';
+}).join('')+'</div>';
+el.innerHTML=html;
 }
 
-static _rmVit(id){
-if(window._ui)window._ui.net.removeVitrine(id);
+renderTrade(room,me){
+var el=document.getElementById('main-view');
+if(!el)return;
+var players=room.players||{};
+var others=[];
+var self=this;
+Object.keys(players).forEach(function(k){
+if(k!==self.net.myId)others.push(players[k]);
+});
+if(others.length===0){el.innerHTML='<h3>Торговля</h3><p class="hint">Нет других игроков</p>';return}
+var html='<h3>Торговля</h3>';
+others.forEach(function(p){
+html+='<div class="t-row"><span>'+p.name+'</span><button class="l-btn s" onclick="ui.sendTrade(\''+self.net.myId+'\',\''+p.id+'\')">Предложить сделку</button></div>';
+});
+el.innerHTML=html;
 }
 
-static _putDogHouse(houseIdx,slot){
-if(!window._ui?.me)return;
-const dogs=Object.entries(window._ui.me.dogs||{}).filter(([,d])=>d.age===(slot==='puppies'?'puppy':'adult'));
-if(!dogs.length)return window._ui.toast('Нет '+(slot==='puppies'?'щенков':'взрослых')+'!',1);
-const list=dogs.map(([k,d])=>`<div class="dog-card"><span>${d.emoji||'🐕'}</span><span>${d.name||''}</span><button class="btn btn-green btn-sm" onclick="UI._doPutHouse('${k}',${houseIdx},'${slot}')">✓</button></div>`).join('');
-window._ui.openModal('Дом #'+(houseIdx+1),list);
+sendTrade(fromId,toId){
+var self=this;
+var dogId=prompt('ID собаки?');
+if(!dogId)return;
+var price=prompt('Цена?');
+price=parseInt(price)||0;
+self.net.sendTrade(toId,dogId,price).then(function(r){
+if(r&&r.ok)self.toast('Предложение отправлено');
+else if(r&&r.err)self.toast(r.err,2);
+});
 }
 
-static _doPutHouse(dogId,houseIdx,slot){
-window._ui.net.putHouse(dogId,houseIdx,slot).then(r=>{
-window._ui.closeModal();
-if(r?.ok)window._ui.toast('Поселено!');
-else window._ui.toast(r?.err||'Ошибка',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
+renderBreed(room,me){
+var el=document.getElementById('main-view');
+if(!el)return;
+if(me.role!==ROLE_N){el.innerHTML='<h3>Разведение</h3><p class="hint">Только питомник</p>';return}
+var houses=me.houses||[];
+if(houses.length===0){el.innerHTML='<h3>Разведение</h3><p class="hint">Нет домов</p>';return}
+var html='<h3>Разведение</h3>';
+houses.forEach(function(h,i){
+var adults=Object.keys(h.adults||{}).length;
+var pups=Object.keys(h.puppies||{}).length;
+html+='<div class="h-card"><b>Дом '+(i+1)+'</b><br>Взрослых: '+adults+', Щенков: '+pups;
+html+='<br><button class="l-btn s" onclick="ui.actBreed('+i+')">🐾 Развести</button></div>';
+});
+el.innerHTML=html;
 }
 
-static _quickPut(dogId){
-if(!window._ui?.me)return;
-const dog=window._ui.me.dogs?.[dogId];
-if(!dog)return;
-const houses=window._ui.me.houses||[];
-if(!houses.length)return window._ui.toast('Нет домов!',1);
-const slot=dog.age==='puppy'?'puppies':'adults';
-const btns=houses.map((_,i)=>`<button class="btn btn-green" style="margin:4px" onclick="UI._doPutHouse('${dogId}',${i},'${slot}')">Дом #${i+1}</button>`).join('');
-window._ui.openModal('Выбери дом',btns);
+actBreed(houseIdx){
+var self=this;
+self.net.breedDogs(houseIdx).then(function(r){
+if(r&&r.ok)self.toast('Родилось '+r.count+' щенков!');
+else if(r&&r.err)self.toast(r.err,2);
+});
 }
 
-static _breed(houseIdx){
-window._ui.net.breedDogs(houseIdx).then(r=>{
-if(r?.ok)window._ui.toast('+'+r.count+' щенков!');
-else window._ui.toast(r?.err||'Нужно 2+ взрослых',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
-}
-
-static _takeCredit(amount){
-if(!window._ui?.net?.roomRef)return;
-const payback=Math.round(amount*1.3);
-const id='c'+Date.now().toString(36);
-window._ui.net.roomRef.child('players/'+window._ui.net.myId+'/credits/'+id).set({amount,payback,paid:false});
-const bal=(window._ui.me.balance||0)+amount;
-window._ui.net.roomRef.child('players/'+window._ui.net.myId+'/balance').set(bal);
-window._ui.toast('+'+amount+'🪙');
-}
-
-static _payCredit(id){
-if(!window._ui?.me)return;
-const c=window._ui.me.credits?.[id];
-if(!c)return;
-if((window._ui.me.balance||0)<c.payback)return window._ui.toast('Не хватает!',1);
-window._ui.net.roomRef.child('players/'+window._ui.net.myId).update({balance:(window._ui.me.balance||0)-c.payback,['credits/'+id+'/paid']:true});
-window._ui.toast('Кредит закрыт!');
-}
-
-static _sendTrade(dogId){
-if(!window._ui?.me)return;
-const sel=document.querySelector(`.trade-sel[data-dog="${dogId}"]`);
-const toId=sel?.value;
-if(!toId)return window._ui.toast('Выбери игрока!',1);
-const dog=window._ui.me.dogs?.[dogId];
-window._ui.net.sendTrade(toId,dogId,dog?.price).then(r=>{
-if(r?.ok)window._ui.toast('Отправлено!');
-else window._ui.toast(r?.err||'Ошибка',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
-}
-
-static _respTrade(tradeId,accept){
-window._ui.net.respondTrade(tradeId,accept).then(r=>{
-if(r?.ok)window._ui.toast(accept?'Сделка!':'Отклонено');
-else window._ui.toast(r?.err||'Ошибка',1);
-}).catch(()=>window._ui.toast('Ошибка',1));
+renderBank(room,me){
+var el=document.getElementById('main-view');
+if(!el)return;
+el.innerHTML='<h3>Банк</h3><p>В разработке</p>';
 }
 }
