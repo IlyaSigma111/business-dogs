@@ -219,13 +219,14 @@ actBuyDog(){
 var self=this;
 var room=self.state;
 if(!room)return;
+var me=room.players?.[self.net.myId]||{};
 var breed=prompt('Порода ('+Object.keys(BREED_MAP).join(', ')+')?');
 if(!breed||!BREED_MAP[breed])return self.toast('Нет породы',1);
 var age=prompt('Возраст (0=щенок, 1=взрослый)?');
 age=parseInt(age)||0;
 var b=BREED_MAP[breed];
 var cost=age===AGE_P?Math.round(b.base*0.5):b.base;
-if(me.balance<cost)return self.toast('Не хватает монет ('+cost+')',1);
+if((me.balance||0)<cost)return self.toast('Не хватает монет ('+cost+')',1);
 self.net.buyDog(breed,age).then(function(r){if(r&&r.err)self.toast(r.err,2)});
 }
 

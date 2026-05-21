@@ -69,6 +69,7 @@ if(this.timerLeft<=0){clearInterval(this.timerInt);this.emit('seasonEnd')}
 
 async setReady(v){if(!this.roomRef)return;await this.roomRef.child('players/'+this.myId+'/ready').set(v)}
 async setHostPlay(v){if(!this.roomRef)return;await this.roomRef.child('players/'+this.myId+'/hostPlay').set(v)}
+async setRole(pid,role){if(!this.roomRef)return;await this.roomRef.child('players/'+pid+'/role').set(role)}
 async startGame(){if(!this.roomRef)return;await this.roomRef.update({started:true,timer:SEASON_SEC})}
 
 async addHouse(){
