@@ -44,21 +44,27 @@ self.renderGame();
 });
 
 this.net.on('update',function(room,me){
+try{
 console.log('UI update event, started:',room?room.started:'no room');
 self.state=room;
 self.me=me;
 if(!room){console.log('No room data');return}
 var codeEl=document.getElementById('d-code');
 if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
+console.log('Before showScreen, roomCode:',self.net.roomCode);
 if(room.started){
 self.showScreen('scr-game');
 }else{
 self.showScreen('scr-wait');
 }
+console.log('After showScreen');
 console.log('Calling renderWait...');
 try{self.renderWait(room)}catch(e){console.error('renderWait error:',e.message,e.stack)}
 console.log('Calling renderGame...');
 try{self.renderGame()}catch(e){console.error('renderGame error:',e.message,e.stack)}
+}catch(e){
+console.error('update handler error:',e.message,e.stack);
+}
 });
 console.log('UI init done');
 }
@@ -97,11 +103,21 @@ this.toast('Ошибка: '+e.message,3);
 }
 
 showScreen(id){
+try{
 console.log('showScreen:',id);
-document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active')});
+var screens=document.querySelectorAll('.screen');
+console.log('Found',screens.length,'screens');
+screens.forEach(function(s,i){
+console.log('Screen',i,':',s.id,s.className);
+s.classList.remove('active');
+});
 var el=document.getElementById(id);
+console.log('Target screen:',el?el.id:'NOT FOUND');
 if(el)el.classList.add('active');
 else console.error('Screen not found:',id);
+}catch(e){
+console.error('showScreen error:',e.message,e.stack);
+}
 }
 
 copyCode(){
