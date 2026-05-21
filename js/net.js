@@ -191,10 +191,11 @@ if(!this.roomRef)return;
 const tradeSnap=await DB.ref('rooms/'+this.roomCode+'/trades/'+tradeId).get();
 const trade=tradeSnap.val();if(!trade)return;
 if(accept){
-const buyer=snap.val().players?.[this.myId];
+const roomSnap=await this.roomRef.get();
+const room=roomSnap.val();
+const buyer=room.players?.[this.myId];
 if(!buyer||buyer.balance<trade.price)return{err:'Не хватает'};
-const sellerSnap=await this.roomRef.child('players/'+trade.from).get();
-const seller=sellerSnap.val();if(!seller)return;
+const seller=room.players?.[trade.from];if(!seller)return{err:'Продавец не найден'};
 const buyerDogs=buyer.dogs||{};buyerDogs[trade.dog.id]={...trade.dog};
 if(seller.vitrine?.[trade.dog.id])delete seller.vitrine[trade.dog.id];
 if(seller.dogs?.[trade.dog.id])delete seller.dogs[trade.dog.id];
