@@ -108,6 +108,8 @@ if(self.timerLeft<=0){clearInterval(self.timerInt);self.emit('seasonEnd')}
 async setReady(v){if(!this.roomRef||!this.myId)return;await this.roomRef.child('players/'+this.myId+'/ready').set(v)}
 async setHostPlay(v){if(!this.roomRef||!this.myId)return;await this.roomRef.child('players/'+this.myId+'/hostPlay').set(v)}
 async startGame(){if(!this.roomRef)return;await this.roomRef.update({started:true,timer:SEASON_SEC})}
+async kickPlayer(pid){if(!this.roomRef||!this.myId)return;await this.roomRef.child('players/'+pid).remove()}
+async changeRole(pid,role){if(!this.roomRef||!this.myId)return;await this.roomRef.child('players/'+pid+'/role').set(role)}
 
 async buyCat(breed,age){
 if(!this.roomRef||!this.myId)return;

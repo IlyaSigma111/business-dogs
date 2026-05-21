@@ -114,6 +114,19 @@ this.showScreen('scr-lobby');
 this.toast('Покинули комнату');
 };
 
+UI.prototype.kick=function(pid){
+if(!confirm('Кикнуть игрока?'))return;
+this.net.kickPlayer(pid).then(()=>this.toast('Игрок кикнут'));
+};
+
+UI.prototype.cycleRole=function(pid){
+var players=this.state.players;
+if(!players||!players[pid])return;
+var cur=players[pid].role;
+var next=cur===ROLE_N?ROLE_S:cur===ROLE_S?ROLE_B:ROLE_N;
+this.net.changeRole(pid,next);
+};
+
 UI.prototype.renderWait=function(){
 var listEl=document.getElementById('w-list');
 var btnStart=document.getElementById('btn-start');
@@ -126,8 +139,11 @@ var keys=Object.keys(players);
 var readyCount=0;
 var html='';
 var myId=this.net.myId;
+var me=players[myId];
+var isHost=me&&me.isHost;
 for(var i=0;i<keys.length;i++){
-var p=players[keys[i]];if(!p)continue;
+var pid=keys[i];
+var p=players[pid];if(!p)continue;
 if(p.ready)readyCount++;
 var emoji=p.role===ROLE_S?'🏪':p.role===ROLE_B?'🏦':'🐱';
 var roleLabel=p.role===ROLE_S?'Магазин':p.role===ROLE_B?'Банкир':'Питомник';
@@ -136,8 +152,12 @@ html+='<div class="p-left"><span class="p-emoji">'+emoji+'</span>';
 html+='<div><div class="p-name">'+(p.name||'Кот')+'</div>';
 html+='<div class="p-role">'+roleLabel+(p.isHost?' 👑':'')+'</div></div></div>';
 html+='<div class="p-right"><span class="p-ready '+(p.ready?'y':'n')+'"></span>';
-html+='<span style="color:#fdcb6e;font-size:.8rem">'+fmtN(p.balance||0)+'</span></div>';
-html+='</div>';
+html+='<span style="color:#fdcb6e;font-size:.8rem">'+fmtN(p.balance||0)+'</span>';
+if(isHost&&pid!==myId){
+html+='<button class="p-kick-btn" onclick="ui.kick(\''+pid+'\')" title="Кикнуть">❌</button>';
+html+='<button class="p-role-btn" onclick="ui.cycleRole(\''+pid+'\')" title="Сменить роль">🔄</button>';
+}
+html+='</div></div>';
 }
 listEl.innerHTML=html;
 var me=players[myId];
