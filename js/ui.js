@@ -106,15 +106,18 @@ showScreen(id){
 try{
 console.log('showScreen:',id);
 var screens=document.querySelectorAll('.screen');
-console.log('Found',screens.length,'screens');
-screens.forEach(function(s,i){
-console.log('Screen',i,':',s.id,s.className);
+screens.forEach(function(s){
+s.style.display='none';
 s.classList.remove('active');
 });
 var el=document.getElementById(id);
-console.log('Target screen:',el?el.id:'NOT FOUND');
-if(el)el.classList.add('active');
-else console.error('Screen not found:',id);
+if(el){
+el.style.display='flex';
+el.classList.add('active');
+console.log('showScreen: forced display:flex on',id);
+}else{
+console.error('Screen not found:',id);
+}
 }catch(e){
 console.error('showScreen error:',e.message,e.stack);
 }
