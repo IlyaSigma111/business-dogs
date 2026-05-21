@@ -1,75 +1,128 @@
 class UI{
 constructor(net){this.net=net;this.state=null;this.me=null;this.tab='main'}
 init(){
-document.getElementById('btn-create').onclick=()=>this.doCreate();
-document.getElementById('btn-join').onclick=()=>this.doJoin();
-document.getElementById('btn-copy').onclick=()=>this.copyCode();
-document.getElementById('btn-start').onclick=()=>this.net.startGame();
-document.getElementById('btn-leave').onclick=()=>this.leaveRoom();
-document.getElementById('btn-end-season').onclick=()=>this.net.endSeason();
-document.getElementById('m-x').onclick=()=>this.closeModal();
-document.getElementById('btn-restart').onclick=()=>this.leaveRoom();
-document.getElementById('chk-ready').onchange=e=>this.net.setReady(e.target.checked);
-document.getElementById('chk-host-play').onchange=e=>this.net.setHostPlay(e.target.checked);
-document.querySelectorAll('.bnav').forEach(b=>b.onclick=()=>{
-document.querySelectorAll('.bnav').forEach(x=>x.classList.remove('active'));
-b.classList.add('active');
-this.tab=b.dataset.tab;
-this.renderGame();
-});
 var self=this;
+var el;
+
+el=document.getElementById('btn-create');
+if(el)el.onclick=function(){self.doCreate()};
+
+el=document.getElementById('btn-join');
+if(el)el.onclick=function(){self.doJoin()};
+
+el=document.getElementById('btn-copy');
+if(el)el.onclick=function(){self.copyCode()};
+
+el=document.getElementById('btn-start');
+if(el)el.onclick=function(){self.net.startGame()};
+
+el=document.getElementById('btn-leave');
+if(el)el.onclick=function(){self.leaveRoom()};
+
+el=document.getElementById('btn-end-season');
+if(el)el.onclick=function(){self.net.endSeason()};
+
+el=document.getElementById('m-x');
+if(el)el.onclick=function(){self.closeModal()};
+
+el=document.getElementById('btn-restart');
+if(el)el.onclick=function(){self.leaveRoom()};
+
+el=document.getElementById('chk-ready');
+if(el)el.onchange=function(e){self.net.setReady(e.target.checked)};
+
+el=document.getElementById('chk-host-play');
+if(el)el.onchange=function(e){self.net.setHostPlay(e.target.checked)};
+
+document.querySelectorAll('.bnav').forEach(function(b){
+b.onclick=function(){
+document.querySelectorAll('.bnav').forEach(function(x){x.classList.remove('active')});
+b.classList.add('active');
+self.tab=b.dataset.tab;
+self.renderGame();
+};
+});
+
 this.net.on('update',function(room,me){
+console.log('UI update event, started:',room?room.started:'no room');
 self.state=room;
 self.me=me;
+if(!room)return;
+var codeEl=document.getElementById('d-code');
+if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
 if(room.started){
-document.getElementById('d-code').textContent=self.net.roomCode||'';
 self.showScreen('scr-game');
 }else{
-document.getElementById('d-code').textContent=self.net.roomCode||'';
 self.showScreen('scr-wait');
 }
-self.renderWait(room);
-self.renderGame();
+try{self.renderWait(room)}catch(e){console.error('renderWait:',e)}
+try{self.renderGame()}catch(e){console.error('renderGame:',e)}
 });
+console.log('UI init done');
 }
 
 async doCreate(){
 var name=genName();
 var role=Math.random()<0.4?ROLE_S:ROLE_N;
+console.log('doCreate called, name:',name);
 this.toast('Создаём комнату ('+name+')...');
+try{
 var r=await this.net.createRoom(name,role,true);
-if(r&&r.err)return this.toast(r.err,1);
+console.log('createRoom result:',r);
+if(r&&r.err){this.toast(r.err,3);return}
+if(!r){this.toast('Ошибка создания комнаты',3);return}
+}catch(e){
+console.error('doCreate error:',e);
+this.toast('Ошибка: '+e.message,3);
+}
 }
 
 async doJoin(){
 var code=document.getElementById('inp-code').value.trim();
 if(!code)return this.toast('Введи код!',1);
 var name=genName();
+console.log('doJoin called, code:',code,'name:',name);
 this.toast('Входим ('+name+')...');
+try{
 var r=await this.net.joinRoom(code,name);
-if(r&&r.err)return this.toast(r.err,1);
+console.log('joinRoom result:',r);
+if(r&&r.err){this.toast(r.err,3);return}
+if(!r){this.toast('Ошибка входа',3);return}
+}catch(e){
+console.error('doJoin error:',e);
+this.toast('Ошибка: '+e.message,3);
+}
 }
 
 showScreen(id){
+console.log('showScreen:',id);
 document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('active')});
-document.getElementById(id).classList.add('active');
+var el=document.getElementById(id);
+if(el)el.classList.add('active');
+else console.error('Screen not found:',id);
 }
 
 copyCode(){
-if(navigator.clipboard){navigator.clipboard.writeText(this.net.roomCode).then(()=>this.toast('Скопировано!'))}
+var self=this;
+if(navigator.clipboard){
+navigator.clipboard.writeText(this.net.roomCode).then(function(){self.toast('Скопировано!')});
+}
 }
 
 toast(msg,sec){
 sec=sec||2;
 var el=document.getElementById('toast');
 if(!el)return;
-el.textContent=msg;el.classList.add('show');
+el.textContent=msg;el.classList.remove('hidden');el.classList.add('show');
 var self=this;
 clearTimeout(this._tout);
-this._tout=setTimeout(function(){el.classList.remove('show')},sec*1000);
+this._tout=setTimeout(function(){el.classList.remove('show');el.classList.add('hidden')},sec*1000);
 }
 
-closeModal(){document.getElementById('modal').classList.remove('show')}
+closeModal(){
+var el=document.getElementById('modal');
+if(el)el.classList.add('hidden');
+}
 
 leaveRoom(){
 this.net.leaveRoom();
@@ -82,6 +135,7 @@ renderWait(room){
 var listEl=document.getElementById('wait-players');
 var btnStart=document.getElementById('btn-start');
 var chkReady=document.getElementById('chk-ready');
+var chkHost=document.getElementById('chk-host-play');
 var cntEl=document.getElementById('r-cnt');
 var totEl=document.getElementById('r-tot');
 var hostCtrl=document.getElementById('host-controls');
@@ -97,6 +151,7 @@ var total=keys.length;
 var html='';
 var hcHtml='';
 var self=this;
+var myId=this.net.myId;
 keys.forEach(function(k){
 var p=players[k];
 if(!p)return;
@@ -115,13 +170,15 @@ html+='<div class="w-card">';
 html+='<div class="w-main"><div class="w-avatar">'+roleIcon+' '+pName+'</div>'+hostBadge+bankBadge+'</div>';
 html+='<div class="w-meta"><span class="'+readyClass+'">Готов</span><span>💰 '+balance+'</span></div>';
 html+='</div>';
+if(isHost){
 hcHtml+='<div class="hc-row"><span>'+pName+'</span><span class="role-toggle" data-pid="'+k+'">Сменить</span></div>';
+}
 });
 if(listEl)listEl.innerHTML=html;
 if(cntEl)cntEl.textContent=readyCount;
 if(totEl)totEl.textContent=total;
 if(hostCtrl){
-var me=players[self.net.myId];
+var me=players[myId];
 hostCtrl.style.display=(me&&me.isHost)?'block':'none';
 }
 if(hcList)hcList.innerHTML=hcHtml;
@@ -134,13 +191,18 @@ self.net.setRole(pid,newRole);
 };
 });
 if(btnStart){
-var me=players[this.net.myId];
-btnStart.style.display=(me&&me.isHost&&!room.started)?'block':'none';
+var me=players[myId];
+var isHost=me&&me.isHost;
+btnStart.style.display=(isHost&&!room.started)?'block':'none';
 btnStart.disabled=readyCount<2;
 }
 if(chkReady){
-var me=players[this.net.myId];
+var me=players[myId];
 chkReady.checked=me?me.ready===true:false;
+}
+if(chkHost){
+var me=players[myId];
+chkHost.checked=me?me.hostPlay!==false:true;
 }
 }
 
@@ -168,12 +230,12 @@ renderMain(room,me){
 var left=document.getElementById('left-content');
 var main=document.getElementById('main-view');
 var right=document.getElementById('right-content');
-if(!left||!main)return;
+if(!main)return;
 var demand=room.demand||[];
-var demHtml=demand.map(function(d){
+var demHtml='<h3>Спрос</h3>'+demand.map(function(d){
 return'<div class="d-card"><b>'+d.breed+'</b><br>'+d.price+'💰<br>x'+d.count+'</div>';
 }).join('');
-left.innerHTML='<h3>Спрос</h3>'+demHtml;
+if(left)left.innerHTML=demHtml;
 if(me.role===ROLE_S){
 main.innerHTML='<h3>Магазин</h3><p>Купите дом для витрины.</p><button class="l-btn primary" onclick="ui.actBuyHouse()">🏠 Купить дом (100💰)</button>';
 this.renderShopVitrine(main,me);
@@ -183,7 +245,7 @@ this.renderMyDogs(main,me);
 }
 var vit=me.vitrine||{};
 var vitKeys=Object.keys(vit);
-var vitHtml=vitKeys.length===0?'<p class="hint">Пусто</p>':vitKeys.map(function(k){
+var vitHtml=vitKeys.length===0?'<p class="hint">Витрина пуста</p>':vitKeys.map(function(k){
 var d=vit[k];
 return'<div class="d-row"><b>'+d.breed+'</b> - '+d.price+'💰 <button class="l-btn s" onclick="ui.removeVitrine(\''+k+'\')">Снять</button></div>';
 }).join('');
@@ -256,7 +318,7 @@ if(keys.length===0){el.innerHTML='<h3>Мои собаки</h3><p class="hint">Н
 var html='<h3>Мои собаки</h3>';
 keys.forEach(function(k){
 var d=dogs[k];
-html+='<div class="d-card"><b>'+d.breed+'</b><br>Возраст: '+(d.age===AGE_P?'Щенок':'Взрослый')+'<br>Характер: '+d.temper+'<br><button class="l-btn s" onclick="ui.actSellDog(\''+k+'\')">Продать</button></div>';
+html+='<div class="d-card"><b>'+d.breed+'</b><br>Возраст: '+(d.age===AGE_P?'Щенок':'Взрослый')+'<br>Характер: '+(d.temper||'-')+'<br><button class="l-btn s" onclick="ui.actSellDog(\''+k+'\')">Продать</button></div>';
 });
 el.innerHTML=html;
 }
@@ -279,17 +341,17 @@ var players=room.players||{};
 var others=[];
 var self=this;
 Object.keys(players).forEach(function(k){
-if(k!==self.net.myId)others.push(players[k]);
+if(k!==self.net.myId)others.push({id:k,name:players[k].name});
 });
 if(others.length===0){el.innerHTML='<h3>Торговля</h3><p class="hint">Нет других игроков</p>';return}
 var html='<h3>Торговля</h3>';
 others.forEach(function(p){
-html+='<div class="t-row"><span>'+p.name+'</span><button class="l-btn s" onclick="ui.sendTrade(\''+self.net.myId+'\',\''+p.id+'\')">Предложить сделку</button></div>';
+html+='<div class="t-row"><span>'+p.name+'</span><button class="l-btn s" onclick="ui.sendTrade(\''+p.id+'\')">Предложить сделку</button></div>';
 });
 el.innerHTML=html;
 }
 
-sendTrade(fromId,toId){
+sendTrade(toId){
 var self=this;
 var dogId=prompt('ID собаки?');
 if(!dogId)return;
@@ -328,6 +390,6 @@ else if(r&&r.err)self.toast(r.err,2);
 renderBank(room,me){
 var el=document.getElementById('main-view');
 if(!el)return;
-el.innerHTML='<h3>Банк</h3><p>В разработке</p>';
+el.innerHTML='<h3>Банк</h3><p class="hint">В разработке</p>';
 }
 }

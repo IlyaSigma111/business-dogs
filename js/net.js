@@ -1,31 +1,56 @@
 class Net{
-constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.sync=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={}}
+constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.sync=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={};this._authReady=false}
 on(e,fn){(this._listeners[e]=this._listeners[e]||[]).push(fn)}
 emit(e,...a){(this._listeners[e]||[]).forEach(f=>f(...a))}
 
-async createRoom(name,role,hostPlay=true){
+async _ensureAuth(){
+if(this._authReady)return true;
+try{
+if(firebase.auth&&typeof firebase.auth==='function'){
+await firebase.auth().signInAnonymously();
+}
+this._authReady=true;
+return true;
+}catch(e){
+console.log('Auth skip:',e.message);
+this._authReady=true;
+return true;
+}
+}
+
+async createRoom(name,role,hostPlay){
 if(!name)return{err:'Нет имени'};
+await this._ensureAuth();
 var code=genCode();
 this.roomCode=code;
 this.myId='p'+Date.now().toString(36);
 this.roomRef=DB.ref('rooms/'+code);
-var pd={name:name,role:role,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:true,hostPlay:hostPlay!==false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:true};
+var pd={name:name,role:role||ROLE_N,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:true,hostPlay:hostPlay!==false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:true};
 try{
+console.log('Creating room:',code);
 var roomData={code:code,season:1,timer:SEASON_SEC,demand:shuffle([...DEMAND_POOL]).slice(0,3),players:{},started:false,createdAt:Date.now()};
 await this.roomRef.set(roomData);
+console.log('Room data set');
 await this.roomRef.child('players/'+this.myId).set(pd);
+console.log('Player data set');
 }catch(e){
+console.error('Create error:',e);
 return{err:'Firebase: '+e.message};
 }
 this._startListen(code);
+var room=roomData;
+room.players={};room.players[this.myId]=pd;
+this.emit('update',room,pd);
 return{ok:true,code:code};
 }
 
 async joinRoom(code,name,role){
+await this._ensureAuth();
 this.roomCode=code;
 this.myId=this.myId||('p'+Date.now().toString(36));
 this.roomRef=DB.ref('rooms/'+code);
 try{
+console.log('Joining room:',code);
 var snap=await this.roomRef.get();
 if(!snap.exists()){
 return{err:'Комната не найдена'};
@@ -34,21 +59,29 @@ var room=snap.val();
 if(!room.players?.[this.myId]){
 var pd={name:name||'Игрок',role:role||ROLE_N,balance:START_BAL,dogs:{},houses:[],vitrine:{},credits:{},totalE:0,seasonE:0,ready:false,hostPlay:false,bankrupt:false,utilities:role===ROLE_N?UTIL_NURSERY:UTIL_SHOP,isHost:false};
 await this.roomRef.child('players/'+this.myId).set(pd);
+room.players[this.myId]=pd;
 }
 }catch(e){
+console.error('Join error:',e);
 return{err:'Ошибка: '+e.message};
 }
 this._startListen(code);
+var roomSnap=await this.roomRef.get();
+var room=roomSnap.val();
+var me=room.players?.[this.myId]||null;
+this.emit('update',room,me);
 return{ok:true,code:code};
 }
 
 _startListen(code){
+if(!this.roomRef)return;
 var self=this;
 self.roomRef.on('value',function(snap){
 if(!snap||!snap.exists())return;
 var room=snap.val();
 if(!room)return;
 var me=room.players?.[self.myId]||null;
+console.log('Listener fired, started:',room.started);
 self.emit('update',room,me);
 if(room.started&&!self.timerInt){
 self.timerLeft=room.timer||SEASON_SEC;
@@ -58,12 +91,13 @@ self.startTimer(room.timer);
 }
 
 startTimer(initial){
+var self=this;
 clearInterval(this.timerInt);
 this.timerLeft=initial||SEASON_SEC;
-this.timerInt=setInterval(()=>{
-this.timerLeft--;
-this.emit('tick',this.timerLeft);
-if(this.timerLeft<=0){clearInterval(this.timerInt);this.emit('seasonEnd')}
+this.timerInt=setInterval(function(){
+self.timerLeft--;
+self.emit('tick',self.timerLeft);
+if(self.timerLeft<=0){clearInterval(self.timerInt);self.emit('seasonEnd')}
 },1000);
 }
 
