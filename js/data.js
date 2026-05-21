@@ -16,6 +16,8 @@ const DEMAND_POOL=[
 {breed:'poodle',count:2,price:40,icon:'🐩'},
 {breed:'bulldog',count:1,price:55,icon:'🐶'}
 ];
+const DOG_NAMES=['Бобик','Шарик','Рекс','Тузик','Мухтар','Жучка','Барон','Бим','Каспер','Лорд','Тимка','Гром','Арчи','Чарли','Спарк','Бакс','Джек','Тоби','Макс','Бадди','Дейзи','Луна','Белла','Рокси','Молли','Сэди','Грейс','Зося','Боня','Тесса','Барни','Фрэд','Гектор','Зевс','Тор','Один','Лoki','Бруно','Дюк','Ричи'];
+function genName(){return DOG_NAMES[Math.floor(Math.random()*DOG_NAMES.length)]}
 function makeDog(breed,age,id){
 const b=BREED_MAP[breed];const mult=age===AGE_P?.5:1;
 return{id:id||Date.now().toString(36)+Math.random().toString(36).slice(2,6),breed,name:b.name,emoji:b.icon,age,price:Math.round(b.base*mult),level:1};

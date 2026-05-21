@@ -12,6 +12,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;
 .lobby-main h1{color:#1a1a2e;font-size:1.8rem;font-weight:800;letter-spacing:-.5px}
 .lobby-sub{color:#888;font-size:.82rem;margin-top:4px}
 .lobby-content{display:flex;flex-direction:column;gap:14px}
+.lobby-hint{background:#f8f8f8;border-radius:12px;padding:10px 14px;font-size:.88rem;color:#555;margin-bottom:2px}
 .field-label{display:block;text-align:left;font-size:.75rem;font-weight:600;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .f-inp{width:100%;padding:14px 16px;border:2px solid #e8e8e8;border-radius:14px;font-size:1rem;outline:none;transition:all .2s;background:#f8f8f8}
 .f-inp:focus{border-color:#4caf50;background:#fff;box-shadow:0 0 0 4px rgba(76,175,80,.1)}

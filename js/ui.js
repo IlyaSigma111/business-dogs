@@ -84,17 +84,16 @@ return Math.random()<0.4?ROLE_S:ROLE_N;
 }
 
 async doCreate(){
-const name=document.getElementById('inp-name').value.trim();
-if(!name)return this.toast('Введи имя!',1);
+const name=genName();
 const role=Math.random()<0.4?ROLE_S:ROLE_N;
-this.toast('Создаём комнату...');
+this.toast('Создаём комнату ('+name+')...');
 const r=await this.net.createRoom(name,role,true);
 if(r&&r.err)return this.toast(r.err,1);
 }
 
 async doJoin(){
 const code=document.getElementById('inp-code').value.trim();
-const name=document.getElementById('inp-name').value.trim();
+const name=genName();
 if(!code)return this.toast('Введи код!',1);
 if(!name)return this.toast('Введи имя!',1);
 this.toast('Заходим...');
