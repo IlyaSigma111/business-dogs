@@ -162,7 +162,10 @@ html+='</div></div>';
 listEl.innerHTML=html;
 var me=players[myId];
 if(chkReady)chkReady.checked=me?me.ready:false;
-if(hostSec)hostSec.style.display=(me&&me.isHost)?'block':'none';
+if(hostSec){
+if(me&&me.isHost){hostSec.classList.remove('hidden');hostSec.style.display='block'}
+else{hostSec.classList.add('hidden');hostSec.style.display='none'}
+}
 if(btnStart){
 btnStart.style.display=(me&&me.isHost&&!room.started)?'block':'none';
 btnStart.disabled=readyCount<1;
