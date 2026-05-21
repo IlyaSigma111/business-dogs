@@ -2,7 +2,7 @@ function UI(net){this.net=net;this.state=null;this.me=null;this.tab='home'}
 UI.prototype.init=function(){
 var self=this;
 var el;
-el=document.getElementById('btn-create');if(el)el.onclick=function(){self.doCreate()};
+el=document.getElementById('btn-create');if(el)el.onclick=function(){console.log('btn-create clicked');self.doCreate()};
 el=document.getElementById('btn-join');if(el)el.onclick=function(){self.doJoin()};
 el=document.getElementById('btn-copy');if(el)el.onclick=function(){self.copyCode()};
 el=document.getElementById('btn-start');if(el)el.onclick=function(){self.net.startGame()};
@@ -20,28 +20,45 @@ self.render();
 };})(navBtns[i]);
 }
 this.net.on('update',function(room,me){
+console.log('UI update event:',room?room.started:'no room');
+try{
 self.state=room;self.me=me;
-if(!room)return;
+if(!room){console.log('No room, returning');return}
 var codeEl=document.getElementById('d-code');
 if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
+console.log('Switching screen, started:',room.started);
 if(room.started){
 self.showScreen('scr-game');
 }else{
 self.showScreen('scr-wait');
 }
+console.log('Screen switched, calling renderWait');
 self.renderWait();
+console.log('Calling render');
 self.render();
+console.log('UI update done');
+}catch(e){
+console.error('UI update error:',e);
+}
 });
+console.log('UI init done');
 };
 
 UI.prototype.doCreate=function(){
 var name=genName();
 var roles=[ROLE_N,ROLE_S,ROLE_S,ROLE_N];
 var role=roles[Math.floor(Math.random()*roles.length)];
+console.log('doCreate: name='+name+' role='+role);
 this.toast('Создаём ('+name+')...');
 var self=this;
 this.net.createRoom(name,role,true).then(function(r){
+console.log('createRoom result:',r);
 if(r&&r.err)self.toast(r.err,3);
+else if(r&&r.ok){self.toast('Комната '+r.code)}
+else self.toast('Ошибка',2);
+}).catch(function(e){
+console.error('doCreate catch:',e);
+self.toast('Ошибка: '+e.message,3);
 });
 };
 
@@ -53,14 +70,24 @@ this.toast('Входим ('+name+')...');
 var self=this;
 this.net.joinRoom(code,name).then(function(r){
 if(r&&r.err)self.toast(r.err,3);
+}).catch(function(e){
+self.toast('Ошибка: '+e.message,3);
 });
 };
 
 UI.prototype.showScreen=function(id){
+console.log('showScreen:',id);
 var screens=document.querySelectorAll('.screen');
-for(var i=0;i<screens.length;i++){screens[i].classList.remove('active')}
+for(var i=0;i<screens.length;i++){
+screens[i].classList.remove('active');
+}
 var el=document.getElementById(id);
-if(el)el.classList.add('active');
+if(el){
+el.classList.add('active');
+console.log('Screen active:',el.id);
+}else{
+console.error('Screen not found:',id);
+}
 };
 
 UI.prototype.copyCode=function(){
@@ -213,7 +240,7 @@ if(vitKeys.length>0){
 html+='<div class="card"><h3>📦 Витрина</h3>';
 for(var i=0;i<vitKeys.length;i++){
 var vc=vit[vitKeys[i]];
-html+='<div class="dem-row"><span class="dem-emoji">'+vc.emoji+'</span><span class="dem-breed">'+vc.name+'</span><span class="dem-price">'+fmtN(vc.price)+'🪙</span>';
+html+='<div class="dem-row"><span class="dem-emoji">'+vc.emoji+'</span><span class="dem-breed">'+vc.breed+'</span><span class="dem-price">'+fmtN(vc.price)+'🪙</span>';
 html+='<button class="btn btn-sm" onclick="ui.actRemoveVitrine(\''+vc.id+'\')" style="background:#d63031;color:#fff">Снять</button></div>';
 }
 html+='</div>';
@@ -244,7 +271,7 @@ html+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">';
 var kKeys=Object.keys(h.kittens||{});
 for(var j=0;j<kKeys.length;j++){
 var kc=h.kittens[kKeys[j]];
-html+='<span class="cat-emoji" style="font-size:1rem">'+kc.emoji+'</span>';
+html+='<span style="font-size:1rem">'+kc.emoji+'</span>';
 }
 html+='</div>';
 }
@@ -300,10 +327,10 @@ el.innerHTML=html;
 
 UI.prototype.renderTrade=function(el,room,me){
 var html='<div class="card"><h3>🤝 Торговля</h3>';
-html+='<p style="color:#888;font-size:.85rem;margin-bottom:10px">Купите кота у другого игрока напрямую</p>';
-html+='<div style="display:flex;gap:8px;margin-bottom:10px">';
-html+='<input id="trade-seller" class="inp" style="text-align:left;letter-spacing:0;flex:1" placeholder="ID продавца">';
-html+='<input id="trade-cat" class="inp" style="text-align:left;letter-spacing:0;flex:1" placeholder="ID кота">';
+html+='<p style="color:#888;font-size:.85rem;margin-bottom:10px">Купите кота у другого игрока</p>';
+html+='<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
+html+='<input id="trade-seller" class="inp" style="text-align:left;letter-spacing:0;flex:1;min-width:120px" placeholder="ID продавца">';
+html+='<input id="trade-cat" class="inp" style="text-align:left;letter-spacing:0;flex:1;min-width:120px" placeholder="ID кота">';
 html+='</div>';
 html+='<button class="act-btn act-buy" onclick="ui.actBuyDirect()">Купить</button>';
 html+='</div>';
@@ -312,7 +339,7 @@ el.innerHTML=html;
 
 UI.prototype.renderMore=function(el,room,me){
 var html='<div class="card"><h3>⚙️ Действия</h3>';
-html+='<div class="act-row"><button class="act-btn act-go" onclick="ui.net.endSeason()" style="background:#fdcb6e;color:#000">⏭ Завершить сезон</button></div>';
+html+='<div class="act-row"><button class="act-btn" onclick="ui.net.endSeason()" style="background:#fdcb6e;color:#000">⏭ Завершить сезон</button></div>';
 html+='<div class="act-row"><button class="act-btn act-sell" onclick="ui.leave()" style="background:#d63031;color:#fff">🚪 Покинуть комнату</button></div>';
 html+='</div>';
 html+='<div class="card"><h3>ℹ️ Правила</h3>';

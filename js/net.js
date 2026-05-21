@@ -1,27 +1,45 @@
 class Net{
 constructor(){this.roomRef=null;this.myId=null;this.roomCode=null;this.timerInt=null;this.timerLeft=SEASON_SEC;this._listeners={}}
 on(e,fn){(this._listeners[e]=this._listeners[e]||[]).push(fn)}
-emit(e){(this._listeners[e]||[]).forEach(function(f){f.apply(null,Array.prototype.slice.call(arguments,1))})}
+emit(e){
+var args=Array.prototype.slice.call(arguments,1);
+var fns=this._listeners[e]||[];
+for(var i=0;i<fns.length;i++){
+try{fns[i].apply(null,args)}catch(err){console.error('emit '+e+' error:',err)}
+}
+}
 
 async createRoom(name,role,hostPlay){
+console.log('Net.createRoom:',name,role);
 if(!name)return{err:'Нет имени'};
+try{
 var code=genCode();
+console.log('Generated code:',code);
 this.roomCode=code;
 this.myId='p'+Date.now().toString(36);
+console.log('myId:',this.myId);
 this.roomRef=DB.ref('rooms/'+code);
 var pd={name:name,role:role||ROLE_N,balance:START_BAL,cats:{},houses:[],vitrine:{},loan:0,ready:true,hostPlay:hostPlay!==false,isHost:true,bankrupt:false};
-try{
-await this.roomRef.set({code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false,createdAt:Date.now()});
+var roomData={code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false,createdAt:Date.now()};
+console.log('Writing to Firebase...');
+await this.roomRef.set(roomData);
+console.log('Room data written');
 await this.roomRef.child('players/'+this.myId).set(pd);
-}catch(e){return{err:'Firebase: '+e.message}}
+console.log('Player data written');
+}catch(e){
+console.error('createRoom error:',e);
+return{err:'Firebase: '+e.message};
+}
 this._startListen(code);
 var room={code:code,season:1,timer:SEASON_SEC,demand:shuffle(DEMAND_POOL).slice(0,4),players:{},started:false};
 room.players[this.myId]=pd;
 this.emit('update',room,room.players[this.myId]);
+console.log('createRoom success, returning');
 return{ok:true,code:code};
 }
 
 async joinRoom(code,name){
+console.log('Net.joinRoom:',code,name);
 this.roomCode=code;
 this.myId=this.myId||('p'+Date.now().toString(36));
 this.roomRef=DB.ref('rooms/'+code);
@@ -35,7 +53,10 @@ var pd={name:name||'Кот',role:role,balance:START_BAL,cats:{},houses:[],vitrin
 await this.roomRef.child('players/'+this.myId).set(pd);
 room.players[this.myId]=pd;
 }
-}catch(e){return{err:'Ошибка: '+e.message}}
+}catch(e){
+console.error('joinRoom error:',e);
+return{err:'Ошибка: '+e.message};
+}
 this._startListen(code);
 var snap=await this.roomRef.get();
 var room=snap.val();
