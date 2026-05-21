@@ -87,11 +87,8 @@ const name=document.getElementById('inp-name').value.trim();
 if(!name)return this.toast('Введи имя!',1);
 const role=Math.random()<0.4?ROLE_S:ROLE_N;
 this.toast('Создаём комнату...');
-try{
-await this.net.createRoom(name,role,true);
-}catch(e){
-this.toast('Ошибка: '+e.message,1);
-}
+const r=await this.net.createRoom(name,role,true);
+if(r&&r.err)return this.toast(r.err,1);
 }
 
 async doJoin(){
@@ -100,12 +97,9 @@ const name=document.getElementById('inp-name').value.trim();
 if(!code)return this.toast('Введи код!',1);
 if(!name)return this.toast('Введи имя!',1);
 this.toast('Заходим...');
-try{
 const role=await this._getRoleForJoin(code);
-await this.net.joinRoom(code,name,role);
-}catch(e){
-this.toast('Ошибка: '+e.message,1);
-}
+const r=await this.net.joinRoom(code,name,role);
+if(r&&r.err)return this.toast(r.err,1);
 }
 
 copyCode(){
