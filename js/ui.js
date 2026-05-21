@@ -47,7 +47,7 @@ this.net.on('update',function(room,me){
 console.log('UI update event, started:',room?room.started:'no room');
 self.state=room;
 self.me=me;
-if(!room)return;
+if(!room){console.log('No room data');return}
 var codeEl=document.getElementById('d-code');
 if(codeEl&&self.net.roomCode)codeEl.textContent=self.net.roomCode;
 if(room.started){
@@ -55,8 +55,10 @@ self.showScreen('scr-game');
 }else{
 self.showScreen('scr-wait');
 }
-try{self.renderWait(room)}catch(e){console.error('renderWait:',e)}
-try{self.renderGame()}catch(e){console.error('renderGame:',e)}
+console.log('Calling renderWait...');
+try{self.renderWait(room)}catch(e){console.error('renderWait error:',e.message,e.stack)}
+console.log('Calling renderGame...');
+try{self.renderGame()}catch(e){console.error('renderGame error:',e.message,e.stack)}
 });
 console.log('UI init done');
 }
@@ -132,82 +134,48 @@ this.toast('Покинули комнату');
 }
 
 renderWait(room){
-console.log('renderWait called, room:',room?'yes':'no','players:',room&&room.players?Object.keys(room.players).length:'none');
+console.log('=== renderWait START ===');
+if(!room){console.log('no room');return}
+var players=room.players||{};
+var keys=Object.keys(players);
+console.log('players:',keys.length);
 var listEl=document.getElementById('wait-players');
-var btnStart=document.getElementById('btn-start');
-var chkReady=document.getElementById('chk-ready');
-var chkHost=document.getElementById('chk-host-play');
 var cntEl=document.getElementById('r-cnt');
 var totEl=document.getElementById('r-tot');
-var hostCtrl=document.getElementById('host-controls');
-var hcList=document.getElementById('hc-list');
-console.log('Elements:',listEl?'list ok':'NO LIST',btnStart?'btn ok':'NO BTN');
-if(!room||!room.players){
-if(listEl)listEl.innerHTML='<p>Загрузка...</p>';
-return;
-}
-var players=room.players;
-var keys=Object.keys(players);
-console.log('Player keys:',keys);
-var readyCount=0;
-var total=keys.length;
-var html='';
-var hcHtml='';
-var self=this;
+var btnStart=document.getElementById('btn-start');
+var chkReady=document.getElementById('chk-ready');
 var myId=this.net.myId;
 console.log('myId:',myId);
+var html='';
+var readyCount=0;
 keys.forEach(function(k){
 var p=players[k];
 if(!p)return;
-var pName=p.name||'Игрок';
-var pRole=p.role||ROLE_N;
-var isReady=p.ready===true;
-var isHost=p.isHost===true;
-var balance=p.balance||0;
-var bankrupt=p.bankrupt===true;
-if(isReady)readyCount++;
-var roleIcon=pRole===ROLE_S?'💰':'🏠';
-var readyClass=isReady?'r-on':'r-off';
-var hostBadge=isHost?'<span class="h-badge">👑</span>':'';
-var bankBadge=bankrupt?'<span class="b-badge">💀 Банкрот</span>':'';
-html+='<div class="w-card">';
-html+='<div class="w-main"><div class="w-avatar">'+roleIcon+' '+pName+'</div>'+hostBadge+bankBadge+'</div>';
-html+='<div class="w-meta"><span class="'+readyClass+'">Готов</span><span>💰 '+balance+'</span></div>';
-html+='</div>';
-if(isHost){
-hcHtml+='<div class="hc-row"><span>'+pName+'</span><span class="role-toggle" data-pid="'+k+'">Сменить</span></div>';
-}
+var n=p.name||'Игрок';
+var r=p.role||'nursery';
+var isR=p.ready===true;
+var isH=p.isHost===true;
+var bal=p.balance||0;
+if(isR)readyCount++;
+html+='<div class="w-card"><div class="w-main">'+(r==='shop'?'💰':'🏠')+' '+n+'</div>';
+if(isH)html+='<span class="h-badge">👑</span>';
+html+='<div class="w-meta"><span style="color:'+(isR?'green':'gray')+'">'+(isR?'✓':'✗')+'</span><span>'+bal+'</span></div></div>';
 });
+console.log('generated html len:',html.length);
 if(listEl)listEl.innerHTML=html;
+else console.error('wait-players not found');
 if(cntEl)cntEl.textContent=readyCount;
-if(totEl)totEl.textContent=total;
-if(hostCtrl){
-var me=players[myId];
-hostCtrl.style.display=(me&&me.isHost)?'block':'none';
-}
-if(hcList)hcList.innerHTML=hcHtml;
-document.querySelectorAll('.role-toggle').forEach(function(el){
-el.onclick=function(){
-var pid=this.getAttribute('data-pid');
-var cur=players[pid];
-var newRole=cur.role===ROLE_S?ROLE_N:ROLE_S;
-self.net.setRole(pid,newRole);
-};
-});
+if(totEl)totEl.textContent=keys.length;
 if(btnStart){
 var me=players[myId];
-var isHost=me&&me.isHost;
-btnStart.style.display=(isHost&&!room.started)?'block':'none';
+btnStart.style.display=(me&&me.isHost)?'block':'none';
 btnStart.disabled=readyCount<2;
 }
 if(chkReady){
 var me=players[myId];
 chkReady.checked=me?me.ready===true:false;
 }
-if(chkHost){
-var me=players[myId];
-chkHost.checked=me?me.hostPlay!==false:true;
-}
+console.log('=== renderWait END ===');
 }
 
 renderGame(){
